@@ -102,6 +102,7 @@ class ViewSubmissionsHandler(BaseHandler):
         #   Problem name,
         #   Submission ID,
         #   Submission time,
+        #   Programming Language Used,
         #   Verdict,
         #   Link to the file (this currently won't work, we'll need to hash it out)
         # ]
