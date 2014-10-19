@@ -26,13 +26,43 @@
           <li class="active"><a href="/">Home</a></li>
           <li><a href="/">Problems</a></li>
           <li><a href="/">Scoreboard</a></li>
-          <li><a href="/a/view/submissions">Submissions</a></li>
+          <li><a href="./a/view/submissions">Submissions</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="/">{{ escape(current_user["name"]) }}</a></li>
           <li><a href="/auth/logout">{{ _("Logout") }}</a></li>
         </ul>
       </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-heading">Past Submissions</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Problem</th>
+            <th>Submission ID</th>
+            <th>Submission Time</th>
+            <th>Verdict</th>
+            <th>Link to File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for submission in submissions %}
+            <tr>
+              <td>{{ submission[0] }}</td>
+              <td>{{ submission[1] }}</td>
+              <td>{{ submission[2] }}</td>
+              <td>{{ submission[3] }}</td>
+              <td>{{ submission[4] }}</td>
+              <td>{{ submission[5] }}</td>
+            </tr>
+          {% end %}
+        </tbody>
+      </table>
     </div>
   </div>
 </body>
