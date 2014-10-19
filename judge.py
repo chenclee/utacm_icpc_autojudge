@@ -114,7 +114,7 @@ class ViewSubmissionsHandler(BaseHandler):
         for i, submission in enumerate(scoreboard.get_by_uid(self.get_current_uid())):
             submissionTest.append([i + 1, submission.pid, submission.sid,
                                int((submission.time - scoreboard.start_time) / 60),
-                               submission.verdict, ""])
+                               submission.lang, Verdict.pretty_string(submission.verdict), ""])
         self.render('submissions.html', submissions=submissionTest)
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):

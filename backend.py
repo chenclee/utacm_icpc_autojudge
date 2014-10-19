@@ -11,15 +11,31 @@ import util
 
 class Verdict(object):
     qu = 0 # In Queue
-    ac = 1 # Accepted
-    wa = 2 # Wrong Answer
-    ce = 3 # Compile Error
-    re = 4 # Runtime Error
-    tl = 5 # Time Limit Exceeded
-    ml = 6 # Memory Limit Exceeded
-    se = 7 # Submission Error
-    rf = 8 # Restricted Function
-    cj = 9 # Can't Be Judged
+    ru = 1 # Running
+    ac = 2 # Accepted
+    wa = 3 # Wrong Answer
+    ce = 4 # Compile Error
+    re = 5 # Runtime Error
+    tl = 6 # Time Limit Exceeded
+    ml = 7 # Memory Limit Exceeded
+    se = 8 # Submission Error
+    rf = 9 # Restricted Function
+    cj = 10 # Can't Be Judged
+    
+    pretty_strings = ["In Queue",
+                      "Running",
+                      "Accepted",
+                      "Wrong Answer",
+                      "Compile Error",
+                      "Runtime Error",
+                      "Time Limit Exceeded",
+                      "Memory Limit Exceeded",
+                      "Submission Error",
+                      "Restricted Function",
+                      "Can't Be Judged"]
+    @classmethod
+    def pretty_string(cls, val):
+        return cls.pretty_strings[val]
 
 
 lang_compile = {'GNU C++ 4': ['g++', '-static', '-fno-optimize-sibling-calls',
@@ -100,6 +116,7 @@ class Problem(object):
 
     def judge(self, submission):
         # TODO(chencjlee): test C++, C++11, C
+        submission.verdict = Verdict.ru
         if submission.lang not in lang_run:
             submission.verdict = Verdict.se
         else:
