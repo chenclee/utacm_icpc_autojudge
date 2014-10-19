@@ -111,6 +111,35 @@ class ViewSubmissionsHandler(BaseHandler):
                                submission.lang, Verdict.pretty_string(submission.verdict), ""])
         self.render('submissions.html', submissions=submissionTest)
 
+class ViewProblemsHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        # TODO: Fill problemList with real data
+        #
+        # Format:
+        # [
+        #   [
+        #     short, 1 word id of problem,
+        #     Name of problem
+        #   ],
+        #   [ ... ], ...
+        # ]
+        problemList = []
+
+        # TODO: Fill problemSet with real data
+        #
+        # Format:
+        # [
+        #   [
+        #     short, 1 word id of problem,
+        #     Name of problem,
+        #     Description of problem
+        #   ],
+        #   [ ... ], ...
+        # ]
+        problemSet = []
+        self.render('problems.html', problemList=problemList, problemSet=problemSet)
+
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     @gen.coroutine
     def get(self):
@@ -141,6 +170,7 @@ def main():
                 (r'/a/submit/clarification', SubmitClarificationHandler),
                 (r'/a/view/scoreboard', ViewScoreboardHandler),
                 (r'/a/view/submissions', ViewSubmissionsHandler),
+                (r'/a/view/problems', ViewProblemsHandler),
             ],
             cookie_secret='TODO(chencjlee): Generate a random value',
             login_url='/auth/login',

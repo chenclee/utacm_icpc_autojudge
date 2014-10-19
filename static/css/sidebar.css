@@ -1,0 +1,7 @@
+.custom-sidebar {
+  position: fixed;
+}
+
+.submission > input {
+  display: inline;
+}
