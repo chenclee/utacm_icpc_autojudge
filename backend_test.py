@@ -47,6 +47,24 @@ class TestBackend(unittest.TestCase):
             self.assertEqual(in_file.read(), 'print "CORRECT"')
         shutil.rmtree('submissions/')
 
+
+    def test_judge_submission_java(self):
+        shutil.rmtree('submissions/', ignore_errors=True)
+        prob = Problem('A')
+        submission0 = Submission('A', 'test-user', 'Java 6, 7', 'Main.java',
+            'public class Main{public static void main(String[] args){System.out.println("5");}}')
+        submission1 = Submission('A', 'test-user2', 'Java 6, 7', 'Main.java',
+            'public class Main{public static void main(String[] args){System.out.println("5");}}')
+        submission2 = Submission('A', 'test-user', 'Java 6, 7', 'Main.java',
+            'import java.util.Scanner; public class Main{public static void main(String[] args){Scanner in=new Scanner(System.in);System.out.println(in.nextInt());}}')
+        prob.judge(submission0)
+        prob.judge(submission1)
+        prob.judge(submission2)
+        self.assertEqual(submission0.verdict, Verdict.wa)
+        self.assertEqual(submission1.verdict, Verdict.wa)
+        self.assertEqual(submission2.verdict, Verdict.ac)
+        shutil.rmtree('submissions/')
+
     def test_judge_submission_python(self):
         shutil.rmtree('submissions/', ignore_errors=True)
         prob = Problem('A')
@@ -59,6 +77,42 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(submission0.verdict, Verdict.wa)
         self.assertEqual(submission1.verdict, Verdict.wa)
         self.assertEqual(submission2.verdict, Verdict.ac)
+        shutil.rmtree('submissions/')
+
+    def test_judge_submission_error_submit(self):
+        shutil.rmtree('submissions/', ignore_errors=True)
+        prob = Problem('A')
+        submission0 = Submission('A', 'test-user', 'Python', 'temp',
+                'i=0\nwhile True:\n  i+=1')
+        prob.judge(submission0)
+        self.assertEqual(submission0.verdict, Verdict.se)
+        shutil.rmtree('submissions/')
+
+    def test_judge_submission_error_timeout(self):
+        shutil.rmtree('submissions/', ignore_errors=True)
+        prob = Problem('A')
+        submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp',
+                'i=0\nwhile True:\n  i+=1')
+        prob.judge(submission0)
+        self.assertEqual(submission0.verdict, Verdict.tl)
+        shutil.rmtree('submissions/')
+
+    def test_judge_submission_error_compile(self):
+        shutil.rmtree('submissions/', ignore_errors=True)
+        prob = Problem('A')
+        submission0 = Submission('A', 'test-user', 'Java 6, 7', 'Temp.java',
+                'i=0\nwhile True:\n  i+=1')
+        prob.judge(submission0)
+        self.assertEqual(submission0.verdict, Verdict.ce)
+        shutil.rmtree('submissions/')
+
+    def test_judge_submission_error_runtime(self):
+        shutil.rmtree('submissions/', ignore_errors=True)
+        prob = Problem('A')
+        submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp',
+                'i=0\nwhile True:\n  i++')
+        prob.judge(submission0)
+        self.assertEqual(submission0.verdict, Verdict.re)
         shutil.rmtree('submissions/')
 
     def tearDown(self):
