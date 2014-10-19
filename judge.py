@@ -64,17 +64,10 @@ class ViewScoreboardHandler(BaseHandler):
 
 class ViewSubmissionsHandler(BaseHandler):
     @tornado.web.authenticated
-    @gen.coroutine
     def get(self):
         # TODO: Fill submissiontest with real data
         submissionTest = []
         self.render('submissions.html', submissions=submissionTest)
-
-    def post(self):
-        pass
-
-    def on_connection_close(self):
-        pass
 
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
