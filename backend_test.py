@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 
-from backend import Scoreboard, Problem, Submission, Verdict
+from backend import AutoJudger, Problem, Submission, Verdict
 
 
 class TestBackend(unittest.TestCase):
@@ -33,9 +33,9 @@ class TestBackend(unittest.TestCase):
 
     def test_create_submission(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp', 'print "INCORRECT"')
-        submission1 = Submission('B', 'test-user2', 'Python 2.7', 'blah.py', 'print "INCORRECT"')
-        submission2 = Submission('A', 'test-user', 'Python 2.7', 'a.py', 'print "CORRECT"')
+        submission0 = Submission('A', ('test-user',), 'Python 2.7', 'temp', 'print "INCORRECT"')
+        submission1 = Submission('B', ('test-user2',), 'Python 2.7', 'blah.py', 'print "INCORRECT"')
+        submission2 = Submission('A', ('test-user',), 'Python 2.7', 'a.py', 'print "CORRECT"')
         self.assertTrue(os.path.exists('submissions/test-user/A/0/temp'))
         with open('submissions/test-user/A/0/temp', 'r') as in_file:
             self.assertEqual(in_file.read(), 'print "INCORRECT"')
@@ -50,16 +50,16 @@ class TestBackend(unittest.TestCase):
 
     def test_judge_submission_java(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Java 6, 7', 'Main.java',
             'public class Main{public static void main(String[] args){System.out.println("5");}}')
         submission1 = Submission('A', 'test-user2', 'Java 6, 7', 'Main.java',
             'public class Main{public static void main(String[] args){System.out.println("5");}}')
         submission2 = Submission('A', 'test-user', 'Java 6, 7', 'Main.java',
             'import java.util.Scanner; public class Main{public static void main(String[] args){Scanner in=new Scanner(System.in);System.out.println(in.nextInt());}}')
-        prob.judge(submission0)
-        prob.judge(submission1)
-        prob.judge(submission2)
+        judger.judge(submission0)
+        judger.judge(submission1)
+        judger.judge(submission2)
         self.assertEqual(submission0.verdict, Verdict.wa)
         self.assertEqual(submission1.verdict, Verdict.wa)
         self.assertEqual(submission2.verdict, Verdict.ac)
@@ -67,13 +67,13 @@ class TestBackend(unittest.TestCase):
 
     def test_judge_submission_python(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp', 'print "5"\n')
         submission1 = Submission('A', 'test-user2', 'Python 2.7', 'blah.py', 'print "5"\n')
         submission2 = Submission('A', 'test-user', 'Python 2.7', 'a.py', 'print raw_input()\n')
-        prob.judge(submission0)
-        prob.judge(submission1)
-        prob.judge(submission2)
+        judger.judge(submission0)
+        judger.judge(submission1)
+        judger.judge(submission2)
         self.assertEqual(submission0.verdict, Verdict.wa)
         self.assertEqual(submission1.verdict, Verdict.wa)
         self.assertEqual(submission2.verdict, Verdict.ac)
@@ -81,37 +81,37 @@ class TestBackend(unittest.TestCase):
 
     def test_judge_submission_error_submit(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Python', 'temp',
                 'i=0\nwhile True:\n  i+=1')
-        prob.judge(submission0)
+        judger.judge(submission0)
         self.assertEqual(submission0.verdict, Verdict.se)
         shutil.rmtree('submissions/')
 
     def test_judge_submission_error_timeout(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp',
                 'i=0\nwhile True:\n  i+=1')
-        prob.judge(submission0)
+        judger.judge(submission0)
         self.assertEqual(submission0.verdict, Verdict.tl)
         shutil.rmtree('submissions/')
 
     def test_judge_submission_error_compile(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Java 6, 7', 'Temp.java',
                 'i=0\nwhile True:\n  i+=1')
-        prob.judge(submission0)
+        judger.judge(submission0)
         self.assertEqual(submission0.verdict, Verdict.ce)
         shutil.rmtree('submissions/')
 
     def test_judge_submission_error_runtime(self):
         shutil.rmtree('submissions/', ignore_errors=True)
-        prob = Problem('A')
+        judger = AutoJudger(Problem('A'))
         submission0 = Submission('A', 'test-user', 'Python 2.7', 'temp',
                 'i=0\nwhile True:\n  i++')
-        prob.judge(submission0)
+        judger.judge(submission0)
         self.assertEqual(submission0.verdict, Verdict.re)
         shutil.rmtree('submissions/')
 

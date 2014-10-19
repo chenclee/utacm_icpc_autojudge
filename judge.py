@@ -9,7 +9,6 @@ import time
 import threading
 import os
 import uuid
-import Queue
 
 from tornado.concurrent import Future
 from tornado import gen
@@ -22,8 +21,7 @@ define('port', default=8000, help='start on the given port', type=int)
 define('debug', default=False, help='run in debug mode')
 
 
-scoreboard = Scoreboard([])
-judge_queue = Queue.Queue()
+scoreboard = Scoreboard([], time.time(), time.time() + 60 * 60 * 2, time.time() + 60 * 60 * 3)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -58,7 +56,6 @@ class SubmitClarificationHandler(BaseHandler):
 
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
-    @gen.coroutine
     def get(self):
         # TODO: Fill problemSet with real data
         #
@@ -84,9 +81,6 @@ class ViewScoreboardHandler(BaseHandler):
         # ]
         scoreboard = []
         self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard)
-
-    def on_connection_close(self):
-        pass
 
 
 class ViewSubmissionsHandler(BaseHandler):
