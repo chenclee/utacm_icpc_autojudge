@@ -67,6 +67,22 @@ class ViewSubmissionsHandler(BaseHandler):
     @gen.coroutine
     def get(self):
         # TODO: Fill submissiontest with real data
+        #
+        # Format of submissionTest:
+        # [
+        #   [ submission 1 ],
+        #   [ submission 2 ],
+        #   ...
+        # ]
+        # where the format of a submission is:
+        # [
+        #   Position in array (1 for first submission, 2 for second, ...),
+        #   Problem name,
+        #   Submission ID,
+        #   Submission time,
+        #   Verdict,
+        #   Link to the file (this currently won't work, we'll need to hash it out)
+        # ]
         submissionTest = []
         self.render('submissions.html', submissions=submissionTest)
 
