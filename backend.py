@@ -42,11 +42,7 @@ lang_compile = {'GNU C++ 4': ['g++', '-static', '-fno-optimize-sibling-calls',
                               '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
                               '-s', '-x', 'c++', '-Wl', '--stack=268435456',
                               '-O2', '-o', 'prog_bin'],
-                'GNU C++11 4': ['g++', '-static', '-fno-optimize-sibling-calls',
-                                '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
-                                '-s', '-x', 'c++', '-Wl', '--stack=268435456',
-                                '-O2', '-std=c++11', '-D__USE_MINGW_ANSI_STDIO=0',
-                                '-o', 'prog_bin'],
+                'GNU C++11 4': ['g++', '--std=c++11', '-O2', '-o', 'prog_bin'],
                 'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
                             '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
                             '-lm', '-s', '-Wl', '--stack=268435456', '-O2',
@@ -113,6 +109,12 @@ class Problem(object):
                 break
             self.test_filenames.append((os.path.abspath(input_filename),
                                         os.path.abspath(output_filename)))
+
+    def short(self):
+        return (self.pid, self.name)
+
+    def detailed(self):
+        return (self.pid, self.name, self.statement)
 
 
 class AutoJudger(object):
@@ -189,6 +191,7 @@ class Scoreboard(object):
         self.autojudger = AutoJudger(self)
         self.cache_lock = threading.Lock()
         self.cache = {}
+        self.autojudger.begin()
 
     def is_running(self):
         return self.start_time <= time.time() < self.end_time
@@ -218,6 +221,28 @@ class Scoreboard(object):
                 + (submission.time - self.start_time)
         self.cache[submission.uid]['attempts'][submission.pid] += 1
         self.cache_lock.release()
+
+    def get(self):
+        self.cache_lock.acquire()
+        entries = []
+        for uid in self.cache:
+            sort_key = (-self.cache[uid]['score'], self.cache[uid]['total_penalty'])
+            stats = []
+            for prob in self.problems:
+                pid = prob.pid
+                correct = self.cache[uid]['correct'][pid] 
+                p1 = '-' if not correct else int((correct.time - self.start_time)/60)
+                p2 = self.cache[uid]['attempts'][pid]
+                stats.append("%s/%s" % (p1, p2))
+            entries.append((sort_key, uid[1], stats))
+        entries.sort()
+        self.cache_lock.release()
+        board = []
+        for place, entry in enumerate(entries):
+            line = [place + 1]
+            line.extend(entry[1:])
+            board.append(line)
+        return board
 
     def get_by_uid(self, uid):
         submissions = []

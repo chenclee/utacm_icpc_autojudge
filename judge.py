@@ -20,8 +20,8 @@ from backend import Scoreboard, Problem, Submission, Verdict
 define('port', default=8000, help='start on the given port', type=int)
 define('debug', default=False, help='run in debug mode')
 
-
-scoreboard = Scoreboard([], time.time(), time.time() + 60 * 60 * 2, time.time() + 60 * 60 * 3)
+problems = [Problem('A', 'Largest Region')]
+scoreboard = Scoreboard(problems, time.time(), time.time() + 60 * 60 * 2, time.time() + 60 * 60 * 3)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -45,7 +45,12 @@ class MainHandler(BaseHandler):
 class SubmitCodeHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
-        pass
+        uploaded = self.request.files['source'][0]
+        filename = uploaded['filename']
+        content = uploaded['body']
+        submission = Submission(self.get_arguments('pid')[0], self.get_current_uid(),
+                'Python 2.7', filename, content)
+        scoreboard.new_submission(submission)
 
 
 class SubmitClarificationHandler(BaseHandler):
@@ -57,18 +62,14 @@ class SubmitClarificationHandler(BaseHandler):
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        # TODO: Fill problemSet with real data
-        #
         # Format of problem set:
         # [
         #   'Problem 1',
         #   'Problem 2',
         #   ...
         # ]
-        problemSet = []
+        problemSet = [problem.name for problem in problems]
 
-        # TODO: Fill scoreboard with real data
-        #
         # Format of scoreboard:
         # [
         #   Current Place,
@@ -79,15 +80,13 @@ class ViewScoreboardHandler(BaseHandler):
         #     ...
         #   ]
         # ]
-        scoreboard = []
-        self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard)
+        board = scoreboard.get()
+        self.render('scoreboard.html', problemSet=problemSet, scoreboard=board)
 
 
 class ViewSubmissionsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        # TODO: Fill submissiontest with real data
-        #
         # Format of submissionTest:
         # [
         #   [ submission 1 ],
@@ -114,8 +113,6 @@ class ViewSubmissionsHandler(BaseHandler):
 class ViewProblemsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        # TODO: Fill problemList with real data
-        #
         # Format:
         # [
         #   [
@@ -124,10 +121,8 @@ class ViewProblemsHandler(BaseHandler):
         #   ],
         #   [ ... ], ...
         # ]
-        problemList = []
+        problemList = [problem.short() for problem in problems]
 
-        # TODO: Fill problemSet with real data
-        #
         # Format:
         # [
         #   [
@@ -137,7 +132,7 @@ class ViewProblemsHandler(BaseHandler):
         #   ],
         #   [ ... ], ...
         # ]
-        problemSet = []
+        problemSet = [problem.detailed() for problem in problems]
         self.render('problems.html', problemList=problemList, problemSet=problemSet)
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
