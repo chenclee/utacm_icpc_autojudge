@@ -55,8 +55,31 @@ class SubmitClarificationHandler(BaseHandler):
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
-    def post(self):
-        pass
+    def get(self):
+        # TODO: Fill problemSet with real data
+        #
+        # Format of problem set:
+        # [
+        #   'Problem 1',
+        #   'Problem 2',
+        #   ...
+        # ]
+        problemSet = []
+
+        # TODO: Fill scoreboard with real data
+        #
+        # Format of scoreboard:
+        # [
+        #   Current Place,
+        #   Name,
+        #   [
+        #     time to complete problem 1/attempts,
+        #     time to complete problem 2/attempts,
+        #     ...
+        #   ]
+        # ]
+        scoreboard = []
+        self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard)
 
     def on_connection_close(self):
         pass
@@ -85,9 +108,6 @@ class ViewSubmissionsHandler(BaseHandler):
         # ]
         submissionTest = []
         self.render('submissions.html', submissions=submissionTest)
-
-    def post(self):
-        pass
 
     def on_connection_close(self):
         pass
