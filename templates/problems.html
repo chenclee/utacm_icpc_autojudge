@@ -44,7 +44,7 @@
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar nav-pills nav-stacked custom-sidebar" role="tablist">
             {% for problem in problemList %}
-              <li class="custom-tab"><a href="#{{ problem[0] }}" onclick="{{ problem[0] }}Click()" role="tab" data-toggle="tab">{{ problem[1] }}</a></li>
+            <li class="custom-tab"><a href="#{{ problem[0] }}" role="tab" data-toggle="tab">{{ problem[1] }}</a></li>
             {% end %}
           </ul>
         </div>
@@ -80,11 +80,7 @@
       e.preventDefault()
       $(this).tab('show')
     })
-    
-    $('#myTab a:first').tab('show')
-  </script>
 
-  <script type="text/javascript">
     function getTime () {
       var timerValue = $('#timer').text();
       var oneSecond = 1000;

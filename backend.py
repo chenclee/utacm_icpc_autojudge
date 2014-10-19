@@ -198,6 +198,9 @@ class Scoreboard(object):
     def is_running(self):
         return self.start_time <= time.time() < self.end_time
 
+    def remaining_time(self):
+        return int(self.end_time - time.time())
+
     def is_frozen(self):
         return time.time() >= self.freeze_time
 

@@ -42,7 +42,8 @@ class MainHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         # TODO: Set timer
-        timer = '01:00:03'
+        curr_time = scoreboard.remaining_time()
+        timer = '%02d:%02d:%02d' % (curr_time / 60 / 60, curr_time / 60 % 60, curr_time % 60)
         self.render('index.html', timer=timer)
 
 
@@ -67,7 +68,8 @@ class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         # TODO: Set timer
-        timer = '00:20:00'
+        curr_time = scoreboard.remaining_time()
+        timer = '%02d:%02d:%02d' % (curr_time / 60 / 60, curr_time / 60 % 60, curr_time % 60)
 
         # TODO: Fill problemSet with real data
         #
@@ -89,15 +91,16 @@ class ViewScoreboardHandler(BaseHandler):
         #     ...
         #   ]
         # ]
-        scoreboard = []
-        self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard, timer=timer)
+        board = scoreboard.get()
+        self.render('scoreboard.html', problemSet=problemSet, scoreboard=board, timer=timer)
 
 
 class ViewSubmissionsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         # TODO: Set timer
-        timer = '01:00:03'
+        curr_time = scoreboard.remaining_time()
+        timer = '%02d:%02d:%02d' % (curr_time / 60 / 60, curr_time / 60 % 60, curr_time % 60)
 
         submissionTest = []
         for i, submission in enumerate(scoreboard.get_by_uid(self.get_current_uid())):
@@ -110,7 +113,8 @@ class ViewProblemsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         # TODO: Set timer
-        timer = '01:00:03'
+        curr_time = scoreboard.remaining_time()
+        timer = '%02d:%02d:%02d' % (curr_time / 60 / 60, curr_time / 60 % 60, curr_time % 60)
 
         # TODO: Fill problemList with real data
         #
@@ -133,7 +137,7 @@ class ViewProblemsHandler(BaseHandler):
         #   ],
         #   [ ... ], ...
         # ]
-        problemSet = []
+        problemSet = [problem.detailed() for problem in problems]
         self.render('problems.html', problemList=problemList, problemSet=problemSet, timer=timer)
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
