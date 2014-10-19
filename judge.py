@@ -53,7 +53,6 @@ class SubmitCodeHandler(BaseHandler):
         submission = Submission(self.get_arguments('pid')[0], self.get_current_uid(),
                 'Python 2.7', filename, content)
         scoreboard.new_submission(submission)
-        self.redirect('/a/view/submissions')
 
 
 class SubmitClarificationHandler(BaseHandler):

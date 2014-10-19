@@ -1,5 +1,11 @@
 .custom-sidebar {
   position: fixed;
+  width: inherit;
+  text-align: center;
+}
+
+.custom-tab {
+  padding: 0 0.5em 0.5em 0.5em;
 }
 
 .submission > input {

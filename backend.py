@@ -81,6 +81,7 @@ class Submission(object):
         with open(os.path.join(self.filepath, self.filename), 'w+') as out_file:
             out_file.write(content)
 
+
     def __str__(self):
         return 'pid=%s;sid=%s;uid=%s;time=%s;verdict=%s' % \
                 (self.pid, self.sid, self.uid[0], self.time, self.verdict)

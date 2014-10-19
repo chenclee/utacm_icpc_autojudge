@@ -41,15 +41,15 @@
     <div class="row">
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar custom-sidebar">
+          <ul class="nav nav-sidebar nav-pills nav-stacked custom-sidebar" role="tablist">
             {% for problem in problemList %}
-              <li><a href="#{{ problem[0] }}" onclick="{{ problem[0] }}Click()">{{ problem[1] }}</a></li>
+              <li class="custom-tab"><a href="#{{ problem[0] }}" onclick="{{ problem[0] }}Click()" role="tab" data-toggle="tab">{{ problem[1] }}</a></li>
             {% end %}
           </ul>
         </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main tab-content">
           {% for problem in problemSet %}
-            <div id="{{ problem[0] }}" class="problemPage">
+            <div id="{{ problem[0] }}" class="tab-pane">
               <h2>{{ problem[1] }}</h2>
               <p>{{ problem[2] }}</p>
               <div class="panel panel-default">
@@ -75,30 +75,12 @@
 
 
   <script type="text/javascript">
-    displayMap = {};
-
-    function hideAll () {
-      divs = document.getElementsByClassName("problemPage");
-
-      for (var i = 0; i < divs.length; i++) {
-        displayMap[divs[i].id] = divs[i].style.display;
-        divs[i].style.display = "none";
-      }
-    }
-
-    {% for problem in problemList %}
-      function {{ problem[0] }}Click() {
-        hideAll();
-        document.getElementById("{{ problem[0] }}").removeAttribute('style');
-        setTimeout(function () {
-            document.body.scrollTop = document.documentElement.scrollTop = 0;
-          },
-          5
-        );
-      }
-    {% end %}
-
-    hideAll();
+    $('#myTab a').click(function (e) {
+      e.preventDefault()
+      $(this).tab('show')
+    })
+    
+    $('#myTab a:first').tab('show')
   </script>
 </body>
 </html>
