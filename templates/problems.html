@@ -58,10 +58,11 @@
                   <h3 class="panel-title">Submission</h3>
                 </div>
                 <div class="panel-body">
-                  <form method="post" action="/a/submit/code" class="submission">
-                    <input type="hidden" value="{{ problem[0] }}" />
-                    <input type="file" />
-                    <input type="submit" />
+                  <form method="post" enctype="multipart/form-data" action="/a/submit/code" class="submission">
+                    <input type="hidden" name="pid" value="{{ problem[0] }}" />
+                    <input type="file" name="source"/>
+                    <input type="submit" value="{{ _("Submit") }}"/>
+                    {% module xsrf_form_html() %}
                   </form>
                 </div>
               </div>

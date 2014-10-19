@@ -42,11 +42,7 @@ lang_compile = {'GNU C++ 4': ['g++', '-static', '-fno-optimize-sibling-calls',
                               '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
                               '-s', '-x', 'c++', '-Wl', '--stack=268435456',
                               '-O2', '-o', 'prog_bin'],
-                'GNU C++11 4': ['g++', '-static', '-fno-optimize-sibling-calls',
-                                '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
-                                '-s', '-x', 'c++', '-Wl', '--stack=268435456',
-                                '-O2', '-std=c++11', '-D__USE_MINGW_ANSI_STDIO=0',
-                                '-o', 'prog_bin'],
+                'GNU C++11 4': ['g++', '--std=c++11', '-O2', '-o', 'prog_bin'],
                 'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
                             '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
                             '-lm', '-s', '-Wl', '--stack=268435456', '-O2',
@@ -98,8 +94,9 @@ class Problem(object):
     input_filename = 'in-%02d.txt'
     output_filename = 'out-%02d.txt'
 
-    def __init__(self, pid):
+    def __init__(self, pid, name=None):
         self.pid = pid
+        self.name = pid if not name else name
         with open(os.path.join(Problem.path, pid, Problem.cfg_filename), 'r') as in_file:
             self.config = eval(in_file.read().replace('\n', ''))
         with open(os.path.join(Problem.path, pid, Problem.statement_filename), 'r') as in_file:
@@ -113,10 +110,39 @@ class Problem(object):
             self.test_filenames.append((os.path.abspath(input_filename),
                                         os.path.abspath(output_filename)))
 
+    def short(self):
+        return (self.pid, self.name)
+
+    def detailed(self):
+        return (self.pid, self.name, self.statement)
+
+
+class AutoJudger(object):
+    def __init__(self, scoreboard):
+        self.problems = {problem.pid: problem for problem in scoreboard.problems}
+        self.queue = Queue.Queue()
+        self.active = False
+        self.scoreboard = scoreboard
+        def target():
+            while self.active:
+                submission = self.queue.get()
+                self.judge(submission)
+                self.scoreboard.judged(submission)
+        self.thread = threading.Thread(target=target)
+        self.thread.daemon = True
+
+    def begin(self):
+        self.active = True
+        self.thread.start()
+
+    def end(self):
+        self.active = False
+        self.thread.join()
 
     def judge(self, submission):
         # TODO(chencjlee): test C++, C++11, C
         submission.verdict = Verdict.ru
+        problem = self.problems[submission.pid]
         if submission.lang not in lang_run:
             submission.verdict = Verdict.se
         else:
@@ -134,11 +160,11 @@ class Problem(object):
                     run_cmd = lang_run[submission.lang][:]
                     if run_cmd[0] != './prog_bin':
                         run_cmd.append(submission.filename.replace('.java', ''))
-                    for input_filename, output_filename in self.test_filenames:
+                    for input_filename, output_filename in problem.test_filenames:
                         with open(input_filename, 'r') as input_file, \
                                 open(output_filename, 'r') as output_file:
                             return_code, actual_output = util.TimeoutCommand().run(
-                                run_cmd, input_file, self.config['time_limit'])
+                                run_cmd, input_file, problem.config['time_limit'])
                             if return_code == -15:
                                 submission.verdict = max(submission.verdict, Verdict.tl)
                             elif return_code != 0:
@@ -157,23 +183,72 @@ class Problem(object):
 
 
 class Scoreboard(object):
-    def __init__(self, problems):
-        self.start_time = time.time()
+    def __init__(self, problems, start_time, freeze_time, end_time, penalty=20*60):
+        self.start_time = start_time
+        self.freeze_time = freeze_time
+        self.end_time = end_time
+        self.problems = problems
+        self.penalty = penalty
+        self.autojudger = AutoJudger(self)
         self.cache_lock = threading.Lock()
         self.cache = {}
+        self.autojudger.begin()
+
+    def is_running(self):
+        return self.start_time <= time.time() < self.end_time
+
+    def is_frozen(self):
+        return time.time() >= self.freeze_time
 
     def new_submission(self, submission):
         logging.info('New submission: %s' % submission)
         self.cache_lock.acquire()
         if submission.uid not in self.cache:
-            self.cache[submission.uid] = []
-        self.cache[submission.uid].append(submission)
+            self.cache[submission.uid] = {'submissions':[], 'total_penalty':0,
+                    'attempts':{problem.pid:0 for problem in self.problems},
+                    'score':0,
+                    'correct':{problem.pid:None for problem in self.problems}}
+        self.cache[submission.uid]['submissions'].append(submission)
         self.cache_lock.release()
+        self.autojudger.queue.put(submission)
+
+    def judged(self, submission):
+        self.cache_lock.acquire()
+        if submission.verdict == Verdict.ac:
+            self.cache[submission.uid]['correct'][submission.pid] = submission
+            self.cache[submission.uid]['score'] += 1
+            self.cache[submission.uid]['total_penalty'] += \
+                self.penalty * (self.cache[submission.uid]['attempts'][submission.pid]) \
+                + (submission.time - self.start_time)
+        self.cache[submission.uid]['attempts'][submission.pid] += 1
+        self.cache_lock.release()
+
+    def get(self):
+        self.cache_lock.acquire()
+        entries = []
+        for uid in self.cache:
+            sort_key = (-self.cache[uid]['score'], self.cache[uid]['total_penalty'])
+            stats = []
+            for prob in self.problems:
+                pid = prob.pid
+                correct = self.cache[uid]['correct'][pid] 
+                p1 = '-' if not correct else int((correct.time - self.start_time)/60)
+                p2 = self.cache[uid]['attempts'][pid]
+                stats.append("%s/%s" % (p1, p2))
+            entries.append((sort_key, uid[1], stats))
+        entries.sort()
+        self.cache_lock.release()
+        board = []
+        for place, entry in enumerate(entries):
+            line = [place + 1]
+            line.extend(entry[1:])
+            board.append(line)
+        return board
 
     def get_by_uid(self, uid):
         submissions = []
         self.cache_lock.acquire()
         if uid in self.cache:
-            submissions = self.cache[uid][::-1]
+            submissions = self.cache[uid]['submissions'][::-1]
         self.cache_lock.release()
         return submissions

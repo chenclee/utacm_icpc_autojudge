@@ -8,8 +8,8 @@ import tornado.web
 import time
 import threading
 import os
+import sys
 import uuid
-import Queue
 
 from tornado.concurrent import Future
 from tornado import gen
@@ -21,9 +21,9 @@ from backend import Scoreboard, Problem, Submission, Verdict
 define('port', default=8000, help='start on the given port', type=int)
 define('debug', default=False, help='run in debug mode')
 
-
-scoreboard = Scoreboard([])
-judge_queue = Queue.Queue()
+with open('problems/problems.txt', 'r') as cfg_file:
+    problems = [Problem(*t) for t in eval(cfg_file.read().strip())]
+scoreboard = Scoreboard(problems, time.time(), time.time() + 60 * 60 * 2, time.time() + 60 * 60 * 3)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -49,7 +49,13 @@ class MainHandler(BaseHandler):
 class SubmitCodeHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
-        pass
+        uploaded = self.request.files['source'][0]
+        filename = uploaded['filename']
+        content = uploaded['body']
+        submission = Submission(self.get_arguments('pid')[0], self.get_current_uid(),
+                'Python 2.7', filename, content)
+        scoreboard.new_submission(submission)
+        self.redirect('/a/view/submissions')
 
 
 class SubmitClarificationHandler(BaseHandler):
@@ -60,7 +66,6 @@ class SubmitClarificationHandler(BaseHandler):
 
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
-    @gen.coroutine
     def get(self):
         # TODO: Set timer
         timer = '00:20:00'
@@ -73,10 +78,8 @@ class ViewScoreboardHandler(BaseHandler):
         #   'Problem 2',
         #   ...
         # ]
-        problemSet = []
+        problemSet = [problem.name for problem in problems]
 
-        # TODO: Fill scoreboard with real data
-        #
         # Format of scoreboard:
         # [
         #   Current Place,
@@ -89,9 +92,6 @@ class ViewScoreboardHandler(BaseHandler):
         # ]
         scoreboard = []
         self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard, timer=timer)
-
-    def on_connection_close(self):
-        pass
 
 
 class ViewSubmissionsHandler(BaseHandler):
@@ -123,10 +123,8 @@ class ViewProblemsHandler(BaseHandler):
         #   ],
         #   [ ... ], ...
         # ]
-        problemList = []
+        problemList = [problem.short() for problem in problems]
 
-        # TODO: Fill problemSet with real data
-        #
         # Format:
         # [
         #   [
@@ -183,4 +181,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Terminating contest..."
