@@ -5,6 +5,7 @@ import os
 import uuid
 import Queue
 
+
 class Verdict(object):
     qu = 0 # In Queue
     ac = 1 # Accepted
@@ -54,9 +55,13 @@ class Submission(object):
 
 
 class Problem(object):
-    def __init__(self, pid, time_limit):
+    path = "problems/"
+    cfg_filename = "constraints.txt"
+
+    def __init__(self, pid):
         self.pid = pid
-        self.time_limit = time_limit
+        with open(os.path.join(Problem.path, pid, Problem.cfg_filename), 'r') as in_file:
+            self.config = eval(in_file.read().replace('\n', ''))
 
     def judge(self, submission):
         # TODO(chencjlee): actually implement judging
