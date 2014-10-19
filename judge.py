@@ -41,7 +41,9 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render('index.html')
+        # TODO: Set timer
+        timer = '01:00:03'
+        self.render('index.html', timer=timer)
 
 
 class SubmitCodeHandler(BaseHandler):
@@ -64,6 +66,11 @@ class SubmitClarificationHandler(BaseHandler):
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
+        # TODO: Set timer
+        timer = '00:20:00'
+
+        # TODO: Fill problemSet with real data
+        #
         # Format of problem set:
         # [
         #   'Problem 1',
@@ -82,39 +89,31 @@ class ViewScoreboardHandler(BaseHandler):
         #     ...
         #   ]
         # ]
-        board = scoreboard.get()
-        self.render('scoreboard.html', problemSet=problemSet, scoreboard=board)
+        scoreboard = []
+        self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard, timer=timer)
 
 
 class ViewSubmissionsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        # Format of submissionTest:
-        # [
-        #   [ submission 1 ],
-        #   [ submission 2 ],
-        #   ...
-        # ]
-        # where the format of a submission is:
-        # [
-        #   Position in array (1 for first submission, 2 for second, ...),
-        #   Problem name,
-        #   Submission ID,
-        #   Submission time,
-        #   Programming Language Used,
-        #   Verdict,
-        #   Link to the file (this currently won't work, we'll need to hash it out)
-        # ]
+        # TODO: Set timer
+        timer = '01:00:03'
+
         submissionTest = []
         for i, submission in enumerate(scoreboard.get_by_uid(self.get_current_uid())):
             submissionTest.append([i + 1, submission.pid, submission.sid,
                                int((submission.time - scoreboard.start_time) / 60),
                                submission.lang, Verdict.pretty_string(submission.verdict), ""])
-        self.render('submissions.html', submissions=submissionTest)
+        self.render('submissions.html', submissions=submissionTest, timer=timer)
 
 class ViewProblemsHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
+        # TODO: Set timer
+        timer = '01:00:03'
+
+        # TODO: Fill problemList with real data
+        #
         # Format:
         # [
         #   [
@@ -134,8 +133,8 @@ class ViewProblemsHandler(BaseHandler):
         #   ],
         #   [ ... ], ...
         # ]
-        problemSet = [problem.detailed() for problem in problems]
-        self.render('problems.html', problemList=problemList, problemSet=problemSet)
+        problemSet = []
+        self.render('problems.html', problemList=problemList, problemSet=problemSet, timer=timer)
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     @gen.coroutine

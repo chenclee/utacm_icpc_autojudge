@@ -28,6 +28,7 @@
           <li class="active"><a href="/a/view/problems">Problems</a></li>
           <li><a href="/a/view/scoreboard">Scoreboard</a></li>
           <li><a href="/a/view/submissions">Submissions</a></li>
+          <li><a id="timer">{{ timer }}</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="/">{{ escape(current_user["name"]) }}</a></li>
@@ -81,6 +82,55 @@
     })
     
     $('#myTab a:first').tab('show')
+  </script>
+
+  <script type="text/javascript">
+    function getTime () {
+      var timerValue = $('#timer').text();
+      var oneSecond = 1000;
+
+      if (timerValue === '' ||
+          timerValue === null ||
+          timerValue === undefined) {
+        return setTimeout(getTimer, oneSecond);
+      }
+      else {
+        var timerParts = timerValue.split(':');
+        var time = Number(timerParts[2]) +
+          Number(timerParts[1]) * 60 +
+          Number(timerParts[0]) * 60 * 60;
+        decrementTimer(time);
+      }
+    }
+
+    function decrementTimer (time) {
+      var hours = Math.floor(Math.floor(time / 60) / 60);
+      var minutes = Math.floor(time / 60) % 60;
+      var seconds = time % 60;
+      var oneSecond = 1000;
+
+      $('#timer').text(
+        pad(hours, 2) + ':' +
+        pad(minutes, 2) + ':' +
+        pad(seconds, 2)
+      );
+
+      setTimeout(function () {
+        if (time > 0) {
+          decrementTimer(time - 1);
+        }
+      }, oneSecond);
+    }
+
+    function pad(num, size) {
+      var str = num + "";
+      while (str.length < size) {
+        str = "0" + str;
+      }
+      return str;
+    }
+
+    getTime();
   </script>
 </body>
 </html>
