@@ -34,7 +34,7 @@ class BaseHandler(tornado.web.RequestHandler):
         return tornado.escape.json_decode(user_json)
 
 
-class MainHandler(tornado.web.RequestHandler):
+class MainHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         self.render('index.html')
@@ -104,8 +104,8 @@ def main():
             ],
             cookie_secret='TODO(chencjlee): Generate a random value',
             login_url='/auth/login',
-            template_path=os.path.join(os.path.dirname(__file__), 'templates'),
-            static_path=os.path.join(os.path.dirname(__file__), 'static'),
+            template_path='templates',
+            static_path='static',
             xsrf_cookies=True,
             debug=options.debug,
     )
