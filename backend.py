@@ -147,7 +147,16 @@ class Scoreboard(object):
 
     def new_submission(self, submission):
         logging.info('New submission: %s' % submission)
-        judge_queue.put(submission)
         self.cache_lock.acquire()
-        self.cache[submission.sid] = submission
+        if submission.uid not in self.cache:
+            self.cache[submission.uid] = []
+        self.cache[submission.uid].append(submission)
         self.cache_lock.release()
+
+    def get_submissions_uid(self, uid):
+        submissions = []
+        self.cache_lock.acquire()
+        if uid in self.cache:
+            submissions = self.cache[::-1]
+        self.cache_lock.release()
+        return submissions
