@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ACM Competition</title>
+
+  <meta charset="utf-8" />
+  <link rel="stylesheet" type="text/css" href="{{ static_url("css/bootstrap.min.css") }}" />
+  <link rel="stylesheet" type="text/css" href="{{ static_url("css/navbarFix.css") }}" />
+  <link rel="stylesheet" type="text/css" href="{{ static_url("css/sidebar.css") }}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script type="text/javascript" src="{{ static_url("js/bootstrap.min.js") }}"></script>
+</head>
+<body>
+  <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">ACM Competition</a>
+      </div>
+      <div class="navbar-collapse collapse" style="height: 1px;">
+        <ul class="nav navbar-nav">
+          <li><a href="/">Home</a></li>
+          <li class="active"><a href="/a/view/problems">Problems</a></li>
+          <li><a href="/a/view/scoreboard">Scoreboard</a></li>
+          <li><a href="/a/view/submissions">Submissions</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="/">{{ escape(current_user["name"]) }}</a></li>
+          <li><a href="/auth/logout">{{ _("Logout") }}</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar custom-sidebar">
+            {% for problem in problemList %}
+              <li><a href="#{{ problem[0] }}" onclick="{{ problem[0] }}Click()">{{ problem[1] }}</a></li>
+            {% end %}
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          {% for problem in problemSet %}
+            <div id="{{ problem[0] }}" class="problemPage">
+              <h2>{{ problem[1] }}</h2>
+              <p>{{ problem[2] }}</p>
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Submission</h3>
+                </div>
+                <div class="panel-body">
+                  <form method="post" action="/a/submit/code" class="submission">
+                    <input type="hidden" value="{{ problem[0] }}" />
+                    <input type="file" />
+                    <input type="submit" />
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% end %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script type="text/javascript">
+    displayMap = {};
+
+    function hideAll () {
+      divs = document.getElementsByClassName("problemPage");
+
+      for (var i = 0; i < divs.length; i++) {
+        displayMap[divs[i].id] = divs[i].style.display;
+        divs[i].style.display = "none";
+      }
+    }
+
+    {% for problem in problemList %}
+      function {{ problem[0] }}Click() {
+        hideAll();
+        document.getElementById("{{ problem[0] }}").removeAttribute('style');
+        setTimeout(function () {
+            document.body.scrollTop = document.documentElement.scrollTop = 0;
+          },
+          5
+        );
+      }
+    {% end %}
+
+    hideAll();
+  </script>
+</body>
+</html>
