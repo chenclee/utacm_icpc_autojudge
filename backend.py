@@ -129,6 +129,7 @@ class AutoJudger(object):
                 self.judge(submission)
                 self.scoreboard.judged(submission)
         self.thread = threading.Thread(target=target)
+        self.thread.daemon = True
 
     def begin(self):
         self.active = True

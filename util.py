@@ -15,6 +15,7 @@ class TimeoutCommand(object):
             self.output = self.process.communicate()
 
         thread = threading.Thread(target=target)
+        thread.daemon = True
         thread.start()
 
         thread.join(timeout)

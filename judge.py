@@ -8,6 +8,7 @@ import tornado.web
 import time
 import threading
 import os
+import sys
 import uuid
 
 from tornado.concurrent import Future
@@ -20,7 +21,8 @@ from backend import Scoreboard, Problem, Submission, Verdict
 define('port', default=8000, help='start on the given port', type=int)
 define('debug', default=False, help='run in debug mode')
 
-problems = [Problem('A', 'Largest Region')]
+with open('problems/problems.txt', 'r') as cfg_file:
+    problems = [Problem(*t) for t in eval(cfg_file.read().strip())]
 scoreboard = Scoreboard(problems, time.time(), time.time() + 60 * 60 * 2, time.time() + 60 * 60 * 3)
 
 
@@ -51,6 +53,7 @@ class SubmitCodeHandler(BaseHandler):
         submission = Submission(self.get_arguments('pid')[0], self.get_current_uid(),
                 'Python 2.7', filename, content)
         scoreboard.new_submission(submission)
+        self.redirect('/a/view/submissions')
 
 
 class SubmitClarificationHandler(BaseHandler):
@@ -179,4 +182,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Terminating contest..."
