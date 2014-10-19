@@ -34,20 +34,26 @@ lang_run = {'GNU C++ 4': './prog_bin',
 
 
 class Submission(object):
+    path = 'submissions/'
+
     next_sid = 0
     @classmethod
     def get_next_sid(cls):
         sid = cls.next_sid
         cls.next_sid += 1
-        return sid
+        return str(sid)
 
-    def __init__(self, pid, uid, lang, filename):
-        self.pid = problem_id
+    def __init__(self, pid, uid, lang, filename, content):
+        self.pid = pid
         self.sid = Submission.get_next_sid()
         self.uid = uid
-        self.filename = filename
-        self.time = time.time()
         self.verdict = Verdict.qu
+        self.time = time.time()
+        self.filename = os.path.join(Submission.path, self.uid, self.pid, self.sid, filename)
+        if not os.path.exists(os.path.dirname(self.filename)):
+            os.makedirs(os.path.dirname(self.filename))
+        with open(self.filename, 'w+') as out_file:
+            out_file.write(content)
 
     def __str__(self):
         return 'pid=%s;sid=%s;uid=%s;time=%s;verdict=%s' % \
@@ -55,17 +61,20 @@ class Submission(object):
 
 
 class Problem(object):
-    path = "problems/"
-    cfg_filename = "constraints.txt"
+    path = 'problems/'
+    cfg_filename = 'constraints.txt'
+    statement_filename = 'statement.html'
 
     def __init__(self, pid):
         self.pid = pid
         with open(os.path.join(Problem.path, pid, Problem.cfg_filename), 'r') as in_file:
             self.config = eval(in_file.read().replace('\n', ''))
+        with open(os.path.join(Problem.path, pid, Problem.statement_filename), 'r') as in_file:
+            self.statement = in_file.read()
 
     def judge(self, submission):
         # TODO(chencjlee): actually implement judging
-        return Verdict.ac
+        submission.verdict = Verdict.ac
 
 
 class Scoreboard(object):
