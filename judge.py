@@ -33,6 +33,10 @@ class BaseHandler(tornado.web.RequestHandler):
             return None
         return tornado.escape.json_decode(user_json)
 
+    def get_current_uid(self):
+        cookie = self.get_current_user()
+        return (cookie['id'], cookie['name'])
+
 
 class MainHandler(BaseHandler):
     @tornado.web.authenticated
@@ -107,6 +111,10 @@ class ViewSubmissionsHandler(BaseHandler):
         #   Link to the file (this currently won't work, we'll need to hash it out)
         # ]
         submissionTest = []
+        for i, submission in enumerate(scoreboard.get_by_uid(self.get_current_uid())):
+            submissionTest.append([i + 1, submission.pid, submission.sid,
+                               int((submission.time - scoreboard.start_time) / 60),
+                               submission.lang, Verdict.pretty_string(submission.verdict), ""])
         self.render('submissions.html', submissions=submissionTest)
 
 class ViewProblemsHandler(BaseHandler):
@@ -143,6 +151,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     def get(self):
         if self.get_argument('openid.mode', None):
             user = yield self.get_authenticated_user()
+            user['id'] = str(uuid.uuid4())
             self.set_secure_cookie('utacm_contest_user',
                                    tornado.escape.json_encode(user))
             self.redirect('/')
