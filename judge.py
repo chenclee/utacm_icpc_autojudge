@@ -59,8 +59,31 @@ class SubmitClarificationHandler(BaseHandler):
 class ViewScoreboardHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
-    def post(self):
-        pass
+    def get(self):
+        # TODO: Fill problemSet with real data
+        #
+        # Format of problem set:
+        # [
+        #   'Problem 1',
+        #   'Problem 2',
+        #   ...
+        # ]
+        problemSet = []
+
+        # TODO: Fill scoreboard with real data
+        #
+        # Format of scoreboard:
+        # [
+        #   Current Place,
+        #   Name,
+        #   [
+        #     time to complete problem 1/attempts,
+        #     time to complete problem 2/attempts,
+        #     ...
+        #   ]
+        # ]
+        scoreboard = []
+        self.render('scoreboard.html', problemSet=problemSet, scoreboard=scoreboard)
 
     def on_connection_close(self):
         pass
@@ -83,6 +106,7 @@ class ViewSubmissionsHandler(BaseHandler):
         #   Problem name,
         #   Submission ID,
         #   Submission time,
+        #   Programming Language Used,
         #   Verdict,
         #   Link to the file (this currently won't work, we'll need to hash it out)
         # ]
@@ -92,7 +116,6 @@ class ViewSubmissionsHandler(BaseHandler):
                                int((submission.time - scoreboard.start_time) / 60),
                                submission.verdict, ""])
         self.render('submissions.html', submissions=submissionTest)
-
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     @gen.coroutine
