@@ -62,7 +62,7 @@ class Submission(object):
         self.lang = lang
         self.verdict = Verdict.qu
         self.time = time.time()
-        self.filepath = os.path.join(Submission.path, self.uid, self.pid, self.sid)
+        self.filepath = os.path.join(Submission.path, self.uid[0], self.pid, self.sid)
         self.filename = filename
         if not os.path.exists(self.filepath):
             os.makedirs(self.filepath)
@@ -71,7 +71,7 @@ class Submission(object):
 
     def __str__(self):
         return 'pid=%s;sid=%s;uid=%s;time=%s;verdict=%s' % \
-                (self.pid, self.sid, self.uid, self.time, self.verdict)
+                (self.pid, self.sid, self.uid[0], self.time, self.verdict)
 
 # os.path.dirname
 
@@ -153,10 +153,10 @@ class Scoreboard(object):
         self.cache[submission.uid].append(submission)
         self.cache_lock.release()
 
-    def get_submissions_uid(self, uid):
+    def get_by_uid(self, uid):
         submissions = []
         self.cache_lock.acquire()
         if uid in self.cache:
-            submissions = self.cache[::-1]
+            submissions = self.cache[uid][::-1]
         self.cache_lock.release()
         return submissions
