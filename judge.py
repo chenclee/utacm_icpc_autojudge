@@ -35,7 +35,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_current_uid(self):
         cookie = self.get_current_user()
-        return (cookie['id'], cookie['name'])
+        return (cookie['email'], cookie['name'])
 
 
 class MainHandler(BaseHandler):
@@ -145,12 +145,12 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     def get(self):
         if self.get_argument('openid.mode', None):
             user = yield self.get_authenticated_user()
-            user['id'] = str(uuid.uuid4())
             self.set_secure_cookie('utacm_contest_user',
                                    tornado.escape.json_encode(user))
             self.redirect('/')
             return
-        self.authenticate_redirect(ax_attrs=['name'])
+        self.authenticate_redirect(ax_attrs=['name', 'email',
+            'language', 'username'])
 
 
 class AuthLogoutHandler(BaseHandler):
