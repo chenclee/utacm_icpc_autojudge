@@ -54,7 +54,7 @@ class SubmitCodeHandler(BaseHandler):
         filename = uploaded['filename']
         content = uploaded['body']
         submission = Submission(self.get_arguments('pid')[0], self.get_current_uid(),
-                'Python 2.7', filename, content)
+                self.get_arguments('lang')[0], filename, content)
         scoreboard.new_submission(submission)
 
 

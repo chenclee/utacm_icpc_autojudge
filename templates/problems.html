@@ -60,8 +60,15 @@
                 <div class="panel-body">
                   <form method="post" enctype="multipart/form-data" action="/a/submit/code" class="submission">
                     <input type="hidden" name="pid" value="{{ problem[0] }}" />
-                    <input type="file" name="source"/>
-                    <input type="submit" value="{{ _("Submit") }}"/>
+                    <select name="lang">
+                        <option value="GNU C++ 4">GNU C++ 4</option>
+                        <option value="GNU C++11 4">GNU C++11 4</option>
+                        <option value="GNU C 4">GNU C 4</option>
+                        <option value="Java 6, 7">Java 6, 7</option>
+                        <option value="Python 2.7">Python 2.7</option>
+                    </select>
+                    <input type="file" name="source" style="padding-left: 2em;"/>
+                    <input type="submit" value="{{ _("Submit") }}" style="float: right;"/>
                     {% module xsrf_form_html() %}
                   </form>
                 </div>
