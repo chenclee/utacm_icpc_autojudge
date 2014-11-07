@@ -1,8 +1,9 @@
 import time
 import threading
 
+
 class Contest:
-    def __init__(self, delay, duration, prob_ids):
+    def __init__(self, delay, duration, prob_ids, penalty=20):
         """Initializes the contest.
 
         Parameter:
@@ -18,7 +19,9 @@ class Contest:
         self.prob_ids = prob_ids
         self.submitted_runs = []
         self.cached_scoreboard = {}
+        self.penalty = penalty
         self.frozen = False
+        self.clarifs = []
 
     def is_running(self):
         """Returns whether the contest is currently running."""
@@ -36,6 +39,38 @@ class Contest:
         """
         self.end_time += duration
 
+    def recompute_scoreboard(self):
+        """Recomputes the scoreboard."""
+        scoreboard = {}
+        for entry in self.submitted_runs:
+            if entry[0] not in scoreboard:
+                scoreboard[entry[0]] = {
+                    'penalty': 0,
+                    'attempts': {prob_id: 0 for prob_id in self.prob_ids},
+                    'solved': {prob_id: False for prob_id in self.prob_ids},
+                    'score': 0
+                }
+            if scoreboard[entry[0]]['solved'][entry[1]]:
+                continue
+            if entry[3]:
+                time_solved = int((entry[2] - self.start_time) / 60.0)
+                scoreboard[entry[0]]['solved'][entry[1]] = time_solved
+                scoreboard[entry[0]]['score'] += 1
+                scoreboard[entry[0]]['penalty'] += (
+                    self.penalty * scoreboard[entry[0]]['attempts'][entry[1]]
+                    + time_solved)
+            scoreboard[entry[0]]['attempts'][entry[1]] += 1
+
+        entries = []
+        for user_id in scoreboard:
+            sort_key = (-scoreboard[user_id]['solved'],
+                        scoreboard[user_id]['penalty'])
+            stats = []
+            for prob_id in self.prob_ids:
+                correct = scoreboard[user_id]['solved'][prob_id]
+                p1 = '-' if not correct else int((
+        self.cached_scoreboard = scoreboard
+
     def freeze_scoreboard(self, freeze):
         """Freezes or unfreezes the scoreboard.
 
@@ -52,17 +87,66 @@ class Contest:
         """
         return self.cached_scoreboard
 
-    def submit_run(self, user_id, prob_id, submit_time, run_success):
-        self.submitted_runs.append((user_id, prob_id, submit_time, run_success))
+    def submit_result(self, user_id, prob_id, submit_time, result):
+        """Submits the results for a user submission to the scoreboard.
+
+        Parameters:
+            user_id - user id
+            prob_id - problem id of submission
+            submit_time - time of submission (use time.time())
+            result - whether the submission was bueno
+        """
+        self.submitted_runs.append(
+            (user_id, prob_id, submit_time, result))
+        if not self.frozen:
+            self.recompute_scoreboard()
 
     def nullify_prob(self, prob_id):
-        pass
+        """Deletes ALL of the results for a given prob_id.
 
-    def clarifs(self):
-        pass
+        Used by the judge for regrading a problem, in the event that
+        there was incorrect judging.
 
-    def submit_clarif(self, message):
-        pass
+        Parameters:
+            prob_id - id of the problem, whose submissions to delete
+        """
+        self.submitted_runs = (
+            [run if run[1] != prob_id for run in self.submitted_runs])
 
-    def respond_clarif(self, clarif_id, response):
-        pass
+    def get_clarifs(self, user_id):
+        """Gets the clarifications/responses for a user.
+
+        Parameters:
+            user_id - id of the user to query
+        """
+        return (c for c in self.clarifs if c[0] == -1 or c[0] == user_id)
+
+    def submit_clarif(self, user_id, prob_id, message):
+        """Submits a clarification request.
+
+        Parameters:
+            user_id - id of the user submitting a request
+            prob_id - id of the problem in question
+            message - a short description of the clarification request
+        """
+        self.clarifs.append((user_id, prob_id, message,))
+
+    def respond_clarif(self, clarif_id, response, private=True):
+        """Responds to a clarification request.
+
+        Parameters:
+            clarif_id - id of the clarif to respond to
+            response - response to the clarification
+            private - whether response should be private to user who submitted
+                the request (default: True)
+        """
+        try:
+            if private:
+                self.clarifs[clarif_id] = (
+                    self.clarifs[clarif_id][:3] + (response,))
+            else:
+                self.clarifs[clarif_id] = (
+                    (-1,) + self.clarifs[clarif_id][1:] + (response,))
+            return True
+        except:
+            return False
