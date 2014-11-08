@@ -47,10 +47,10 @@ class Contest:
                 scoreboard[entry[0]] = {
                     'penalty': 0,
                     'attempts': {prob_id: 0 for prob_id in self.prob_ids},
-                    'solved': {prob_id: False for prob_id in self.prob_ids},
+                    'solved': {prob_id: None for prob_id in self.prob_ids},
                     'score': 0
                 }
-            if scoreboard[entry[0]]['solved'][entry[1]]:
+            if scoreboard[entry[0]]['solved'][entry[1]] is not None:
                 continue
             if entry[3]:
                 time_solved = int((entry[2] - self.start_time) / 60.0)
@@ -67,9 +67,14 @@ class Contest:
                         scoreboard[user_id]['penalty'])
             stats = []
             for prob_id in self.prob_ids:
-                correct = scoreboard[user_id]['solved'][prob_id]
-                p1 = '-' if not correct else int((
-        self.cached_scoreboard = scoreboard
+                time_to_solve = int((scoreboard[user_id]['solved'][prob_id]
+                                    - self.start_time) / 60)
+                p1 = '-' if not correct else time_to_solve
+                p2 = scoreboard[user_id]['attempts'][prob_id]
+                stats.append("%s/%s" % (p1, p2))
+            entries.append((sort_key, user_id[1], tuple(stats)))
+        entries.sort()
+        self.cached_scoreboard = tuple(entries)
 
     def freeze_scoreboard(self, freeze):
         """Freezes or unfreezes the scoreboard.
