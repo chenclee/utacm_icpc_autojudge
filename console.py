@@ -3,31 +3,37 @@ def start_contest(delay, duration, prob_dir, sub_dir):
     # judge = Judge(contest, )
     pass
 
+
 def add_duration(duration):
     contest.extend(duration)
 
+
 def freeze_scoreboard():
-    contest.freeze_scoreboard(TRUE)
+    contest.freeze_scoreboard(True)
+
 
 def unfreeze_scoreboard():
-    contest.freeze_scoreboard(FALSE)
+    contest.freeze_scoreboard(False)
+
 
 def view_recent_submissions():
     # XXX
     submissions = contest.get_submissions()
     print submissions[len(submissions)-10:]
 
+
 def view_clarification_queue():
-    for index,clarif in enumerate(contest.get_clarifs(-1)):
-        if clarif[3] == None:
+    for index, clarif in enumerate(contest.get_clarifs(-1)):
+        if clarif[3] is None:
             prompt_clarification(clarif, index)
+
 
 def prompt_clarification(clarif, clarif_id):
     print clarif[2]
     while True:
         print 'Response options follow:'
-        print '0) \'Reread the problem statement\''
-        print '1) \'Come talk to the administers\''
+        print '0) "Reread the problem statement"'
+        print '1) "Come talk to the administers"'
         print '2) Answer and respond to all'
         print '3) Do not answer at this time'
         option = -1
@@ -50,6 +56,7 @@ def prompt_clarification(clarif, clarif_id):
             return
         else:
             print 'Invalid option. Try again.'
+
 
 if __name__ == '__main__':
     supported_functions = {
