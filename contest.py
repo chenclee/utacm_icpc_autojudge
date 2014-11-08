@@ -3,7 +3,7 @@ import threading
 
 
 class Contest:
-    def __init__(self, delay, duration, prob_ids, penalty=20):
+    def __init__(self, delay, duration, prob_ids, penalty):
         """Initializes the contest.
 
         Parameter:
@@ -29,7 +29,8 @@ class Contest:
 
     def remaining_time(self):
         """Returns the remaining time of the contest in seconds."""
-        return int(self.end_time - time.time())
+        rem = int(self.end_time - time.time())
+        return rem if rem > 0 else 0
 
     def extend(self, duration):
         """Extends the duration of the contest by duration.
@@ -116,7 +117,7 @@ class Contest:
             prob_id - id of the problem, whose submissions to delete
         """
         self.submitted_runs = (
-            [run if run[1] != prob_id for run in self.submitted_runs])
+            [run for run in self.submitted_runs if run[1] != prob_id])
 
     def get_clarifs(self, user_id):
         """Gets the clarifications/responses for a user.
@@ -153,7 +154,7 @@ class Contest:
                     self.clarifs[clarif_id][:3] + (response,))
             else:
                 self.clarifs[clarif_id] = (
-                    (-1,) + self.clarifs[clarif_id][1:] + (response,))
+                    (-1,) + self.clarifs[clarif_id][1:3] + (response,))
             return True
         except:
             return False

@@ -1,11 +1,46 @@
-def start_contest(delay, duration, prob_dir, sub_dir):
-    # contest = Contest(delay, duration, prob_dir)
-    # judge = Judge(contest, )
-    pass
+import os
+import json
+
+from contest import Contest
+from judge import Judge
+
+
+contest = None
+judge = None
+def start_contest(contest_dir, delay=15*60):
+    global contest
+    global judge
+    contest_cfg = None
+    print 'Loading contest config files...'
+    with open(os.path.join(contest_dir, 'config.txt'), 'r') as in_file:
+        contest_cfg = eval(in_file.read())
+        print 'Contest configuration:'
+        print json.dumps(contest_cfg, indent=4)
+
+    contest = Contest(int(delay), contest_cfg['duration'],
+                      contest_cfg['prob_ids'], contest_cfg['penalty'])
+    judge = Judge(contest, contest_cfg['prob_ids'], contest_dir)
 
 
 def add_duration(duration):
-    contest.extend(duration)
+    contest.extend(int(duration))
+
+
+def debug():
+    print '======== DEBUG ========'
+    print 'Contest is currently running:', contest.is_running()
+    rem = contest.remaining_time()
+    print 'Remaining time in contest: %02d:%02d:%02d' % (
+        int(rem / 60 / 60), int(rem / 60 % 60), int(rem % 60))
+    print 'Scoreboard:'
+    print json.dumps(contest.get_scoreboard(), indent=4)
+    print 'Clarifications:'
+    print json.dumps(contest.get_clarifs(-1), indent=4)
+    print '====== END DEBUG ======'
+
+
+def submit_clarif(user_id, prob_id):
+    contest.submit_clarif(user_id, prob_id, raw_input())
 
 
 def freeze_scoreboard():
@@ -60,10 +95,14 @@ def prompt_clarification(clarif, clarif_id):
 
 if __name__ == '__main__':
     supported_functions = {
-        'start':
-            (start_contest, 'start [delay] [duration] [prob_dir] [sub_dir]'),
+        'start_contest':
+            (start_contest, 'start_contest contest_dir [delay]'),
         'add_duration':
-            (add_duration, 'add_duration [duration]'),
+            (add_duration, 'add_duration duration'),
+        'debug':
+            (debug, 'debug'),
+        'submit_clarif':
+            (submit_clarif, 'submit_clarif user_id prob_id'),
         'freeze_scoreboard':
             (freeze_scoreboard, 'freeze_scoreboard'),
         'unfreeze_scoreboard':
@@ -79,7 +118,8 @@ if __name__ == '__main__':
         cmd = cmd_line.split()
         try:
             supported_functions[cmd[0]][0](*cmd[1:])
-        except Exception:
+        except Exception as err:
+            print err
             if cmd_line != '':
                 if cmd[0] in supported_functions:
                     print 'Usage:', supported_functions[cmd[0]][1]
@@ -89,3 +129,5 @@ if __name__ == '__main__':
                         print '    ', supported_functions[func][1]
                 else:
                     print 'You done goofed:', cmd[0]
+        if cmd_line != '':
+            print ''

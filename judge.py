@@ -3,19 +3,8 @@ import uuid
 
 
 class Judge:
-    @staticmethod
-    def load_cfg(prob_id):
-        """Read configuration file for a problem statement
 
-        Parameter:
-            prob_id - problem id to load configuration for
-
-        return - dictionary of configuration parameters
-        """
-        with open('problems/{0}/config.txt'.format(prob_id)) as in_file:
-            return eval(in_file.read())
-
-    def __init__(self, contest, prob_ids):
+    def __init__(self, contest, prob_ids, contest_dir):
         """Read in config files for problem set
 
         contest - pointer to contest state obj
@@ -26,11 +15,26 @@ class Judge:
         Parameters:
             contest  - pointer to contest object
             prob_ids - prob_ids
+            contest_dir - path to contest files directory
         """
         self.contest = contest
         self.permits = {}
-        self.prob_cfgs = {prob_id: load_cfg(prob_id) for prob_id in prob_ids}
+        self.contest_dir = contest_dir
+        self.prob_cfgs = (
+            {prob_id: self.load_cfg(prob_id) for prob_id in prob_ids})
         self.submitted_runs = {}
+
+    def load_cfg(self, prob_id):
+        """Read configuration file for a problem statement
+
+        Parameter:
+            prob_id - problem id to load configuration for
+
+        return - dictionary of configuration parameters
+        """
+        path = '%s/problems/%s/config.txt' % (self.contest_dir, prob_id)
+        with open(path, 'r') as in_file:
+            return eval(in_file.read())
 
     def get_expiring_permit(self, user_id, prob_id):
         """Return a unique id and keep a record of its expiration date
@@ -105,8 +109,9 @@ class Judge:
 
         assert self.permits[user_id][prob_id][-1]['permit_uid'] == permit_uid
 
-        input_file = 'problems/%s/%s' % (
-            prob_id, self.permits[user_id][prob_id][-1]['input_file'])
+        input_file = '%s/problems/%s/%s' % (
+            self.contest_dir, prob_id,
+            self.permits[user_id][prob_id][-1]['input_file'])
         with open(input_file, 'r') as in_file:
             return in_file.read()
 
@@ -126,8 +131,9 @@ class Judge:
         if not valid_permit(user_id, prob_id, permit_uid):
             return None
 
-        output_file = 'problems/%s/%s' % (
-            prob_id, self.permits[user_id][prob_id][-1]['output_file'])
+        output_file = '%s/problems/%s/%s' % (
+            self.contest_dir, prob_id,
+            self.permits[user_id][prob_id][-1]['output_file'])
         with open(output_file, 'r') as out_file:
             if out_file.read().strip() == output.strip():
                 self.permits[user_id][prob_id]['correct'] = True

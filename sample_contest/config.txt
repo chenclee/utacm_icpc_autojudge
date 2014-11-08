@@ -1,0 +1,6 @@
+{
+  'duration': 3*60*60,
+  'penalty': 20,
+  'subm_dir': 'submissions',
+  'prob_ids': ('A', 'B', 'C'),
+}
