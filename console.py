@@ -30,7 +30,12 @@ def prompt_clarification(clarif, clarif_id):
         print '1) \'Come talk to the administers\''
         print '2) Answer and respond to all'
         print '3) Do not answer at this time'
-        option = raw_input()
+        option = -1
+        try:
+            option = int(raw_input())
+        except Exception:
+            print 'Invalid option. Try again.'
+            continue
         if option == 0:
             contest.respond_clarif(clarif_id, 'Reread the problem statement.')
             return
