@@ -134,7 +134,7 @@ class Contest:
             prob_id - id of the problem in question
             message - a short description of the clarification request
         """
-        self.clarifs.append((user_id, prob_id, message,))
+        self.clarifs.append((user_id, prob_id, message, None))
 
     def respond_clarif(self, clarif_id, response, private=True):
         """Responds to a clarification request.
