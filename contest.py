@@ -41,8 +41,6 @@ class Contest:
 
     def recompute_scoreboard(self):
         """Recomputes the scoreboard."""
-        # Just a side note on what an entry, because Jon does terrible
-        # things like use tuples
         scoreboard = {}
         for entry in self.submitted_runs:
             if entry[0] not in scoreboard:
