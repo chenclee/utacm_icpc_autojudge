@@ -41,6 +41,8 @@ class Contest:
 
     def recompute_scoreboard(self):
         """Recomputes the scoreboard."""
+        # Just a side note on what an entry, because Jon does terrible
+        # things like use tuples
         scoreboard = {}
         for entry in self.submitted_runs:
             if entry[0] not in scoreboard:
@@ -124,6 +126,8 @@ class Contest:
         Parameters:
             user_id - id of the user to query
         """
+        if user_id == -1:
+            return self.clarifs
         return (c for c in self.clarifs if c[0] == -1 or c[0] == user_id)
 
     def submit_clarif(self, user_id, prob_id, message):
@@ -155,3 +159,6 @@ class Contest:
             return True
         except:
             return False
+
+    def get_submissions(self):
+        return self.submitted_runs
