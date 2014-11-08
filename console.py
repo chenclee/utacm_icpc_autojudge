@@ -28,7 +28,7 @@ def respond_clarification(args):
 
 if __name__ == '__main__':
     supported_functions = {
-        'start_contest':
+        'start':
             (start_contest, 'start [delay] [duration] [prob_dir] [sub_dir]'),
         'add_duration':
             (add_duration, 'add_duration [duration]'),
@@ -45,10 +45,17 @@ if __name__ == '__main__':
     }
 
     while True:
-        cmd_line = raw_input().trim()
+        cmd_line = raw_input().strip()
         cmd = cmd_line.split()
         try:
             supported_functions[cmd[0]][0](*cmd[1:])
         except Exception:
-            if cmd_line != '' and cmd[0] in supported_functions:
-                print 'Usage:', supported_functions[cmd[0]][1]
+            if cmd_line != '':
+                if cmd[0] in supported_functions:
+                    print 'Usage:', supported_functions[cmd[0]][1]
+                elif cmd[0] == 'help':
+                    print 'Supported Commands:'
+                    for func in supported_functions:
+                        print '    ', supported_functions[func][1]
+                else:
+                    print 'Fuck you Tres:', cmd[0]
