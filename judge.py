@@ -1,4 +1,4 @@
-import datetime
+import time
 import uuid
 
 
@@ -43,7 +43,7 @@ class Judge:
             user_id - unique user id
             prob_id - problem statement id
 
-        Return - returns (unique id, ttl) or None if the max number
+        Return - returns ttl or None if the max number
                  of permits for the user and problem has been reached.
         """
         if user_id not in self.permits:
@@ -58,7 +58,7 @@ class Judge:
 
             ttl = last_permit['expiration'] - now
             if ttl > 0:
-                return (last_permit['permit_uid'], int(ttl))
+                return int(ttl)
 
         if (len(self.permits[user_id][prob_id])
                 == self.prob_cfgs[prob_id]['max_attempts']):
@@ -66,24 +66,21 @@ class Judge:
 
         # if another attempt is valid, generate uuid and store data
         permit_num = len(self.permits[user_id][prob_id])
-        permit_uid = uuid.uuid1()
         self.permits[user_id][prob_id].append({
-            'permit_uid': permit_uid,
             'expiration': now + self.prob_cfgs[prob_id]['time_allowed'],
             'input_file': self.prob_cfgs[prob_id]['inputs'][permit_num],
             'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
             'correct': False
         })
-        return permit_uid
+        return int(self.prob_cfgs[prob_id]['time_allowed'])
 
-    def valid_permit(self, user_id, prob_id, permit_uid):
+    def valid_permit(self, user_id, prob_id):
         """Test whether a permit is valid
         (eg exists and has not expired)
 
         Parameter:
             user_id - owner of the permit
             prob_id - problem the permit is for
-            permit_uid - unique identifier
 
         return - true if permit is valid and false otherwise
         """
@@ -91,23 +88,20 @@ class Judge:
         if (user_id in self.permits
                 and prob_id in self.permits[user_id]
                 and len(self.permits[user_id][prob_id]) > 0):
-            return now > self.permits[user_id][prob_id][-1]['expiration']
+            return now < self.permits[user_id][prob_id][-1]['expiration']
         return False
 
-    def get_input_text(self, user_id, prob_id, permit_uid):
+    def get_input_text(self, user_id, prob_id):
         """Return input file data for user to run program on
 
         Parameter:
             user_id - user requesting the input file
             prob_id - problem the user is request input for
-            permit_uid - unique identifier
 
         return - test data for user to run their program on
         """
-        if not valid_permit(user_id, prob_id, permit_uid):
+        if not self.valid_permit(user_id, prob_id):
             return None
-
-        assert self.permits[user_id][prob_id][-1]['permit_uid'] == permit_uid
 
         input_file = '%s/problems/%s/%s' % (
             self.contest_dir, prob_id,
@@ -116,19 +110,18 @@ class Judge:
             return in_file.read()
 
     # test output sent by user
-    def enqueue_submission(self, user_id, prob_id, permit_uid, source, output):
+    def judge_submission(self, user_id, prob_id, source, output):
         """Test output sent from contestant
 
         Parameters:
             user_id - user who is submitting output
             prob_id - problem the user is submitting output for
-            permit_uid - unique identifier
             source - source code
             output - output to test against correct output
 
         return - true if output was correct and false otherwise
         """
-        if not valid_permit(user_id, prob_id, permit_uid):
+        if not self.valid_permit(user_id, prob_id):
             return None
 
         output_file = '%s/problems/%s/%s' % (
