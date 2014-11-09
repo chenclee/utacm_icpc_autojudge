@@ -2,22 +2,21 @@ import json
 import os
 import uuid
 
-from functools import wraps
-
 from tornado import ioloop, web, auth, httpserver, gen, escape
 from tornado.options import options, parse_command_line, define
 
 from contest import Contest
 from judge import Judge
 
-define('admin_whitelist', default='chencjlee@gmail.com',
-        help='emails of admins', type=str, multiple=True)
+
+define('admin_whitelist', default='TODO:replace_own_email',
+       help='emails of admins', type=str, multiple=True)
 define('port', default=8000,
-        help='start on the given port', type=int)
+       help='start on the given port', type=int)
 define('contest_dir', default='contest',
-        help='path to the contest files', type=str)
+       help='path to the contest files', type=str)
 define('delay', default=15*60,
-        help='delay (in seconds) before starting the contest', type=int)
+       help='delay (in seconds) before starting the contest', type=int)
 
 
 class BaseHandler(web.RequestHandler):
@@ -41,8 +40,8 @@ class AuthLoginHandler(BaseHandler, auth.GoogleMixin):
                                    escape.json_encode(user))
             self.redirect('/')
             return
-        self.authenticate_redirect(ax_attrs=['name', 'email',
-            'language', 'username'])
+        self.authenticate_redirect(ax_attrs=[
+            'name', 'email', 'language', 'username'])
 
 
 class AuthLogoutHandler(BaseHandler):
@@ -54,11 +53,13 @@ class AuthLogoutHandler(BaseHandler):
 class IndexHandler(BaseHandler):
     @web.authenticated
     def get(self):
-        self.write('Welcome, %s' % self.get_current_user_id()[1])
         # Serve page
         # Make sure to send pre-contest page if pre-contest
         # should be asynchronous
-        pass
+        if contest.is_running():
+            self.render('index.html')
+        else:
+            self.render('pre-contest.html')
 
 
 class UpdatesHandler(BaseHandler):
@@ -66,44 +67,79 @@ class UpdatesHandler(BaseHandler):
     def get(self):
         # Send updates in json form
         # Updates being: remaining time, scoreboard, clarifications
-        # should be asynchronous
-        pass
+        updates = {
+            'remaining_time': contest.remaining_time(),
+            'scoreboard': contest.get_scoreboard(),
+            'clarifications': contest.get_clarifs(self.get_current_user_id()),
+        }
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(updates))
 
 
 class PermitsHandler(BaseHandler):
     @web.authenticated
-    def post(self):
+    def get(self, prob_id):
+        # TODO: change back to post and uncomment prob_id
         # Requests a new permit. Body should be just the prob_id
         # Return ttl of permit or -1 if max permits have been issued
         # should be asynchronous
-        pass
+        if not contest.is_running():
+            raise web.HTTPError(503)
+        user_id = self.get_current_user_id()
+        #prob_id = self.request.body
+        if prob_id not in contest_cfg['prob_ids']:
+            raise web.HTTPError(400)
+        permit = judge.get_expiring_permit(user_id, prob_id)
+        if permit is None:
+            raise web.HTTPError(403)
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(permit))
 
 
-class FilesHandler(BaseHandler):
+class InputFilesHandler(BaseHandler):
     @web.authenticated
     def get(self, prob_id):
         # Sends the input file for the specified problem
         # verify valid prob_id
         # Check permit, return error if expired
-        # should be asynchronous
-        pass
+        if not contest.is_running():
+            raise web.HTTPError(503)
+        if prob_id not in contest_cfg['prob_ids']:
+            raise web.HTTPError(404)
+        user_id = self.get_current_user_id()
+        text = judge.get_input_text(user_id, prob_id)
+        if text is None:
+            raise web.HTTPError(409)
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.write(text)
 
+
+class SubmitHandler(BaseHandler):
     @web.authenticated
     def post(self, prob_id):
         # Requests a solution be graded
         # Body should contain: source code, output
-        # verify valid prob_id
+        # Verify valid prob_id
         # Check permit, return error if expired
         # Dispatch to judge, return True or False based on accepted or not
-        # should be asynchronous
-        pass
+        if not contest.is_running():
+            raise web.HTTPError(503)
+        if prob_id not in contest_cfg['prob_ids']:
+            raise web.HTTPError(404)
+        user_id = self.get_current_user_id()
+        source_code, output = json.loads(self.request.body)
+        result = judge.judge_submission(user_id, prob_id, source_code, output)
+        if result is None:
+            raise web.HTTPError(409)
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(result))
 
 
 class AdminHandler(BaseHandler):
     @web.authenticated
     def get(self):
-        if not self.is_admin():
-            return
+        if self.get_current_user_id()[0] not in options.admin_whitelist:
+            raise web.HTTPError(404)
 
         rem = contest.remaining_time()
         webpage = '''<h1>======== DEBUG ========</h1><br>
@@ -115,21 +151,12 @@ class AdminHandler(BaseHandler):
         %s<br>
         <h1>====== END DEBUG ======</h1><br>''' % (
             contest.is_running(),
-            int(rem / 60 / 60),
-            int(rem / 60 % 60),
-            int(rem % 60),
+            int(rem / 60 / 60), int(rem / 60 % 60), int(rem % 60),
             json.dumps(contest.get_scoreboard(), indent=4),
             json.dumps(contest.get_clarifs(-1), indent=4),
         )
         self.write(webpage)
         # TODO: move logic code out of console.py to here
-
-    def is_admin(self):
-        if self.get_current_user_id()[0] not in options.admin_whitelist:
-            self.redirect('/')
-            return False
-        return True
-
 
 
 if __name__ == '__main__':
@@ -149,20 +176,25 @@ if __name__ == '__main__':
     application = web.Application(
         [
             (r'/', IndexHandler),
-            (r'/index', IndexHandler),
+            (r'/index.html', IndexHandler),
             (r'/admin/', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/updates', UpdatesHandler),
-            (r'/api/v1/permits', PermitsHandler),
-            (r'/api/v1/files/(.*)', FilesHandler),
+            (r'/api/v1/permits/(.*)', PermitsHandler),
+            (r'/api/v1/files/(.*)/input.txt', InputFilesHandler),
+            (r'/api/v1/submit/(.*)', SubmitHandler),
         ],
         cookie_secret='TODO: generate a random cookie',
         login_url='/auth/login',
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
         xsrf_cookies=True,
+        debug=True,
     )
 
-    application.listen(options.port)
+    application.listen(
+        port=options.port,
+        max_buffer_size=128*1024,
+    )
     ioloop.IOLoop.instance().start()
