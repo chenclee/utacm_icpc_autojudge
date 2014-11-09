@@ -7,6 +7,8 @@ from judge import Judge
 
 contest = None
 judge = None
+
+
 def start_contest(contest_dir, delay=15*60):
     global contest
     global judge
