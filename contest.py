@@ -126,8 +126,8 @@ class Contest:
             user_id - id of the user to query
         """
         if user_id == -1:
-            return self.clarifs
-        return (c for c in self.clarifs if c[0] == -1 or c[0] == user_id)
+            return tuple(self.clarifs)
+        return tuple(c for c in self.clarifs if c[0] == -1 or c[0] == user_id)
 
     def submit_clarif(self, user_id, prob_id, message):
         """Submits a clarification request.
