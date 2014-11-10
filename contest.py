@@ -29,7 +29,10 @@ class Contest:
 
     def remaining_time(self):
         """Returns the remaining time of the contest in seconds."""
-        rem = int(self.end_time - time.time())
+        now = time.time()
+        if self.start_time - now > 0:
+            return int(self.start_time - now)
+        rem = int(self.end_time - now)
         return rem if rem > 0 else 0
 
     def extend(self, duration):
@@ -64,13 +67,14 @@ class Contest:
 
         entries = []
         for user_id in scoreboard:
-            sort_key = (-scoreboard[user_id]['solved'],
+            sort_key = (-scoreboard[user_id]['score'],
                         scoreboard[user_id]['penalty'])
             stats = []
             for prob_id in self.prob_ids:
-                time_to_solve = int((scoreboard[user_id]['solved'][prob_id]
-                                    - self.start_time) / 60)
-                p1 = '-' if not correct else time_to_solve
+                if scoreboard[user_id]['solved'][prob_id] is not None:
+                    p1 = scoreboard[user_id]['solved'][prob_id]
+                else:
+                    p1 = '-'
                 p2 = scoreboard[user_id]['attempts'][prob_id]
                 stats.append("%s/%s" % (p1, p2))
             entries.append((sort_key, user_id[1], tuple(stats)))
