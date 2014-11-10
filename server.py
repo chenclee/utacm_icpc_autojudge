@@ -57,9 +57,22 @@ class IndexHandler(BaseHandler):
         # Make sure to send pre-contest page if pre-contest
         # should be asynchronous
         if contest.is_running():
-            self.render('index.html')
+            self.render('contest.html')
         else:
             self.render('pre-contest.html')
+
+
+class MetadataHandler(BaseHandler):
+    @web.authenticated
+    def get(self):
+        if not contest.is_running():
+            raise web.HTTPError(503)
+        data = {
+            'prob_ids': contest_cfg['prob_ids'],
+            'prob_contents': problem_contents,
+        }
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(data))
 
 
 class UpdatesHandler(BaseHandler):
@@ -86,7 +99,7 @@ class PermitsHandler(BaseHandler):
         if not contest.is_running():
             raise web.HTTPError(503)
         user_id = self.get_current_user_id()
-        #prob_id = self.request.body
+        # prob_id = self.request.body
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(400)
         permit = judge.get_expiring_permit(user_id, prob_id)
@@ -114,7 +127,7 @@ class InputFilesHandler(BaseHandler):
         self.write(text)
 
 
-class SubmitHandler(BaseHandler):
+class SubmitSolutionHandler(BaseHandler):
     @web.authenticated
     def post(self, prob_id):
         # Requests a solution be graded
@@ -133,6 +146,25 @@ class SubmitHandler(BaseHandler):
             raise web.HTTPError(409)
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(result))
+
+
+class SubmitClarificationHandler(BaseHandler):
+    @web.authenticated
+    def post(self, prob_id):
+        # Requests a solution be graded
+        # Body should contain: source code, output
+        # Verify valid prob_id
+        # Check permit, return error if expired
+        # Dispatch to judge, return True or False based on accepted or not
+        if not contest.is_running():
+            raise web.HTTPError(503)
+        if prob_id not in contest_cfg['prob_ids']:
+            raise web.HTTPError(404)
+        user_id = self.get_current_user_id()
+        message = self.get_argument('content')
+        contest.submit_clarif(user_id, prob_id, message)
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(True))
 
 
 class AdminHandler(BaseHandler):
@@ -162,12 +194,20 @@ class AdminHandler(BaseHandler):
 if __name__ == '__main__':
     parse_command_line()
 
-    print 'Loading contest config files...'
     contest_cfg_path = os.path.join(options.contest_dir, 'config.txt')
     with open(contest_cfg_path, 'r') as in_file:
         contest_cfg = eval(in_file.read())
-        print 'Contest configuration:'
-        print json.dumps(contest_cfg, indent=4)
+
+    def get_problem_content(prob_id):
+        content_path = os.path.join(options.contest_dir,
+                                    'problems',
+                                    prob_id,
+                                    'content.html')
+        with open(content_path, 'r') as in_file:
+            return in_file.read()
+
+    problem_contents = {prob_id: get_problem_content(prob_id)
+                        for prob_id in contest_cfg['prob_ids']}
 
     contest = Contest(options.delay, contest_cfg['duration'],
                       contest_cfg['prob_ids'], contest_cfg['penalty'])
@@ -180,10 +220,12 @@ if __name__ == '__main__':
             (r'/admin/', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
+            (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/permits/(.*)', PermitsHandler),
             (r'/api/v1/files/(.*)/input.txt', InputFilesHandler),
-            (r'/api/v1/submit/(.*)', SubmitHandler),
+            (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
+            (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
         ],
         cookie_secret='TODO: generate a random cookie',
         login_url='/auth/login',
