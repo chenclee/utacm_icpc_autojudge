@@ -1,0 +1,23 @@
+<div class="container">
+<div class="panel panel-default">
+    <div class="panel-heading">Scoreboard</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th ng-repeat="probId in probIds">{{probId}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="person in scoreboard">
+                <td>{{$index}}</td>
+                <td>{{person[1]}}</td>
+                <td ng-repeat="score in person[2] track by $index">
+                    {{score}}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>

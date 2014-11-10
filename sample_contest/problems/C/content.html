@@ -1,0 +1,22 @@
+<h1 class="page-header">Counter-Productive</h1>
+
+<p>A lunch counter has 6 stools for customers.  Six patrons have reservations for time T0.  Six more are scheduled for time T1. And so forth.  All customers show up exactly on time; and it is known exactly how long each customer will stay.  When customers arrive, any one of them may be seated if a prior customer is finished eating, with the proviso that any earlier arriving customer has been seated first. Determine the order of seating and, hence, the shortest time to serve all the customers.
+</p>
+
+<h4>Input</h4>
+<p>Input will be in the form of N pairs of lines. The first of the pair will be a single integer denoting the current time of this set of arrivals. The second line of the pair will contain 6 integers denoting the service time required for the 6 arrivingdiners.</p>
+
+<h4>Output</h4>
+<p>Output should be some number of lines with 6 elements per line showing the service times for each stool. If a column is shorter than the longest, fill in the missing elements with an underscore (_).  These lines are followed by a final line with a single number denoting the time after the first arrival when the final customer has finished eating.</p>
+
+<h4>Sample Input</h4>
+<pre>12
+3 7 5 3 6 1
+15
+1 2 1 4 6 5</pre>
+
+<h4>Sample Output</h4>
+<pre>3 7 5 3 6 1
+1 _ _ 1 _ 2
+4 _ _ 5 _ 6
+11</pre>
