@@ -57,7 +57,7 @@ class Judge:
                 return None
 
             ttl = last_permit['expiration'] - now
-            if ttl > 0:
+            if ttl > 0 and last_permit['correct'] is None:
                 return int(ttl)
 
         if (len(self.permits[user_id][prob_id])
@@ -70,7 +70,7 @@ class Judge:
             'expiration': now + self.prob_cfgs[prob_id]['time_allowed'],
             'input_file': self.prob_cfgs[prob_id]['inputs'][permit_num],
             'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
-            'correct': False
+            'correct': None
         })
         return int(self.prob_cfgs[prob_id]['time_allowed'])
 
@@ -88,7 +88,8 @@ class Judge:
         if (user_id in self.permits
                 and prob_id in self.permits[user_id]
                 and len(self.permits[user_id][prob_id]) > 0):
-            return now < self.permits[user_id][prob_id][-1]['expiration']
+            return (now < self.permits[user_id][prob_id][-1]['expiration']
+                    and self.permits[user_id][prob_id][-1]['correct'] is None)
         return False
 
     def get_input_text(self, user_id, prob_id):
@@ -124,12 +125,12 @@ class Judge:
         if not self.valid_permit(user_id, prob_id):
             return None
 
+        now = time.time()
         output_file = '%s/problems/%s/%s' % (
             self.contest_dir, prob_id,
             self.permits[user_id][prob_id][-1]['output_file'])
         with open(output_file, 'r') as out_file:
-            if out_file.read().strip() == output.strip():
-                self.permits[user_id][prob_id]['correct'] = True
-                return True
-            else:
-                return False
+            result = out_file.read().strip() == output.strip()
+            self.permits[user_id][prob_id][-1]['correct'] = result
+            self.contest.submit_result(user_id, prob_id, now, result)
+            return result
