@@ -181,29 +181,7 @@ class SubmitClarificationHandler(BaseHandler):
 class AdminHandler(BaseHandler):
 
     @web.authenticated
-    def get(self):
-        if not self.is_admin():
-            raise web.HTTPError(404)
-
-        rem = contest.remaining_time()
-        webpage = '''<h1>======== DEBUG ========</h1><br>
-        <b>Contest is currently running:</b> %s<br>
-        <b>Remaining time</b>: %02d:%02d:%02d<br>
-        <b>Scoreboard</b>:<br>
-        %s<br>
-        <b>Clarifications</b>:<br>
-        %s<br>
-        <h1>====== END DEBUG ======</h1><br>''' % (
-            contest.is_running(),
-            int(rem / 60 / 60), int(rem / 60 % 60), int(rem % 60),
-            json.dumps(contest.get_scoreboard(), indent=4),
-            json.dumps(contest.get_clarifs(-1), indent=4),
-        )
-        self.write(webpage)
-        # TODO: move logic code out of console.py to here
-
-    @web.authenticated
-    def put(self):
+    def put(self, clarif):
         if not self.is_admin():
             raise web.HTTPError(404)
 
@@ -224,11 +202,23 @@ class AdminHandler(BaseHandler):
         elif option == 2:
             contest.respond_clarif(clarif_id, "temp", False)
             self.write(json.dumps(True))
-        elif option == 3:
-            self.write(json.dumps(True))
         else:
             raise web.HTTPError(400)
 
+    @web.authenticated
+    def put(self, add_time):
+        if not self.is_admin():
+            raise web.HTTPError(404)
+
+        num_min = 0;
+        try:
+            num_min = int(self.get_argument('numMin'))
+        except Exception:
+            raise web.HTTPError(400)
+
+        contest.extend(num_min * 60)
+
+        self.write(json.dumps(True))
 
 if __name__ == '__main__':
     parse_command_line()
@@ -256,7 +246,7 @@ if __name__ == '__main__':
         [
             (r'/', IndexHandler),
             (r'/index.html', IndexHandler),
-            (r'/api/v1/admin', AdminHandler),
+            (r'/api/v1/admin/(.*)', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/metadata', MetadataHandler),
