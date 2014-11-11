@@ -7,6 +7,7 @@ from tornado.options import options, parse_command_line, define
 
 from contest import Contest
 from judge import Judge
+from data_uri import DataURI
 
 
 define('admin_whitelist', default='TODO:replace_own_email',
@@ -91,15 +92,15 @@ class UpdatesHandler(BaseHandler):
 
 class PermitsHandler(BaseHandler):
     @web.authenticated
-    def get(self, prob_id):
-        # TODO: change back to post and uncomment prob_id
+    def post(self):
         # Requests a new permit. Body should be just the prob_id
-        # Return ttl of permit or -1 if max permits have been issued
+        # Return ttl of permit if max permits have been issued
+        # Raises a 403 error if out of permits
         # should be asynchronous
         if not contest.is_running():
             raise web.HTTPError(503)
         user_id = self.get_current_user_id()
-        # prob_id = self.request.body
+        prob_id = self.get_argument('content')
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(400)
         permit = judge.get_expiring_permit(user_id, prob_id)
@@ -140,7 +141,14 @@ class SubmitSolutionHandler(BaseHandler):
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(404)
         user_id = self.get_current_user_id()
-        source_code, output = json.loads(self.request.body)
+        try:
+            output = DataURI(self.get_argument('outputFile')).data
+        except:
+            output = "MALFORMED OUTPUT"
+        try:
+            source_code = DataURI(self.get_argument('sourceFile')).data
+        except:
+            source_code = "MALFORMED SOURCE CODE"
         result = judge.judge_submission(user_id, prob_id, source_code, output)
         if result is None:
             raise web.HTTPError(409)
@@ -255,7 +263,7 @@ if __name__ == '__main__':
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
-            (r'/api/v1/permits/(.*)', PermitsHandler),
+            (r'/api/v1/permits', PermitsHandler),
             (r'/api/v1/files/(.*)/input.txt', InputFilesHandler),
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),

@@ -3,10 +3,32 @@
 <accordion-group ng-class="getTabClass($index + 1)" ng-click="setActiveTab($index + 1)" ng-repeat="probId in probIds" class="panel" is-open="open[$index]" style="cursor: default;">
         <accordion-heading data-toggle="tab">
             <span style="float: left;">{{probId}}</span>
-            <span class="badge" style="float: right;">0</span>
+            <span class="badge" style="float: right;" ng-show="TODO">0</span>
             <div class="clearfix"></div>
         </accordion-heading>
-        Ready to submit {{probId}}
+        <button class="btn btn-default btn-sm center-block" ng-click="getPermit($index)" ng-show="!showSubmit[$index]">Attempt to solve</button>
+        <div ng-show="showSubmit[$index]">
+            <div class="clearfix">
+                <label for="remainingTime" style="float: left;">Remaining time:</label>
+                <span id="remainingTime" style="float: right;">{{ttl[$index]}}</span>
+            </div>
+            <div class="clearfix">
+                <label for="inputFile" style="float: left;">Input file:</label>
+                <a id="inputFile" href="/api/v1/files/{{probId}}/input.txt" style="float: right;">input.txt</a>
+            </div>
+            <div class="voffset3"></div>
+            <form role="form" ng-submit="processSubmitForm($index)">
+                <div class="form-group">
+                    <label for="outputFile">Output File</label>
+                    <input type="file" id="outputFile" fileread="files.output[$index]">
+                </div>
+                <div class="form-group center-block">
+                    <label for="sourceFile">Source File</label>
+                    <input type="file" id="sourceFile" fileread="files.source[$index]">
+                </div>
+                <button type="submit" class="btn btn-default center-block">Submit</button>
+            </form>
+        </div>
     </accordion-group>
 </accordion>
 </div>
