@@ -72,10 +72,29 @@ contestControllers.controller('HomeCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);
 
-contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies',
-    function ($scope, $http, $rootScope, $window, $cookies) {
+contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies', '$interval',
+    function ($scope, $http, $rootScope, $window, $cookies, $interval) {
       var tabClasses;
         
+      $scope.files = {};
+      $scope.files.output = [];
+      $scope.files.source = [];
+      i = 0;
+      for (probId in probIds) {
+        $scope.files.output.push("");
+        $scope.files.source.push("");
+      }
+      if (typeof $rootScope.showSubmit == 'undefined') {
+        $rootScope.showSubmit = [];
+        $rootScope.ttl = [];
+        $rootScope.tick = [];
+        for (probId in probIds) {
+          $rootScope.showSubmit.push(false);
+          $rootScope.ttl.push(-1);
+          $rootScope.tick.push(null);
+        }
+      }
+
       function initTabs() {
         tabClasses = [];
         $scope.open = [];
@@ -100,7 +119,6 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         $scope.open[tabNum - 1] = true;
       };
 
-      initTabs();
       if (typeof $rootScope.activeTab == 'undefined') {
         $scope.setActiveTab(1);
       } else {
@@ -108,18 +126,79 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       }
 
       $scope.clarif = {}
-      $scope.processClarifForm = function(probId) {
-        submit_url = 'api/v1/submit/' + probIds[probId] + '/clarification';
-        submit_data = { '_xsrf': $cookies._xsrf, 'content': $scope.clarif[probId] };
+      $scope.processClarifForm = function (index) {
+        submitUrl = 'api/v1/submit/' + probIds[index] + '/clarification';
+        submitData = { '_xsrf': $cookies._xsrf, 'content': $scope.clarif[index] };
         $http({
           method  : 'POST',
-          url     : submit_url,
-          data    : $.param(submit_data),
+          url     : submitUrl,
+          data    : $.param(submitData),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {
+        }).success(function (data) {
           if (data) {
-            $window.alert("clarif successfully submitted");
+            $window.alert("Clarification submitted successfully!");
             $scope.clarif[probId] = "";
+          }
+        });
+      }
+
+      function tick (index) {
+        $rootScope.ttl[index] -= 1;
+        if ($rootScope.ttl[index] <= 0) {
+          $rootScope.showSubmit[index] = false;
+          if ($rootScope.tick[index] != null) {
+            $interval.cancel($rootScope.tick[index]);
+            $rootScope.tick[index] = null;
+          }
+        }
+      }
+
+      $scope.getPermit = function (index) {
+        permitUrl = 'api/v1/permits';
+        permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index] };
+        $http({
+          method  : 'POST',
+          url     : permitUrl,
+          data    : $.param(permitData),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function (data) {
+          if ($rootScope.tick[index] != null) {
+            $interval.cancel($rootScope.tick[index]);
+            $rootScope.tick[index] = null;
+          }
+          $rootScope.showSubmit[index] = true;
+          $rootScope.ttl[index] = data;
+          $rootScope.tick[index] = $interval(function () {
+            tick(index);
+          }, 1000, data);
+        }).error(function (data, status, headers, config) {
+          if (status == 403) {
+            $window.alert("You are out of permits!");
+          }
+        });
+      }
+
+      $scope.processSubmitForm = function (index) {
+        submitUrl = 'api/v1/submit/' + probIds[index] + '/solution';
+        submitData = { '_xsrf': $cookies._xsrf,
+                       'outputFile': $scope.files.output[index],
+                       'sourceFile': $scope.files.source[index], };
+        $rootScope.showSubmit[index] = false;
+        $rootScope.ttl[index] = 0;
+        if ($rootScope.tick[index] != null) {
+          $interval.cancel($rootScope.tick[index]);
+          $rootScope.tick[index] = null;
+        }
+        $http({
+          method  : 'POST',
+          url     : submitUrl,
+          data    : $.param(submitData),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function (data) {
+          if (data) {
+            $window.alert("Solution accepted!");
+          } else {
+            $window.alert("Solution incorrect!");
           }
         });
       }
