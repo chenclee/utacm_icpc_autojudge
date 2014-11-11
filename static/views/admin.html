@@ -1,6 +1,7 @@
 <div class="container">
 <h1>Admin Panel</h1>
     <br>
+    {{clarifications}}
     <div class="panel panel-default">
     <div class="panel-heading">Requested Clarifications</div>
     <table class="table">
@@ -21,17 +22,17 @@
                 <td>{{clarif[2]}}</td>
                 <td>
                     <!-- Split button -->
-                    <div class="btn-group" dropdown ng-show="!clarif[4]">
+                    <div class="btn-group" dropdown ng-show="!clarif[3]">
                         <button type="button" class="btn btn-danger">Choose Response</button>
                         <button type="button" class="btn btn-danger dropdown-toggle">
                             <span class="caret"></span>
                             <span class="sr-only">Split button!</span>
                         </button>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a ng-click='proccessClarifResponse($index)'>Reread the problem statement</a></li>
-                            <li><a ng-click='proccessClarifResponse($index)'>Come talk to the administers</a></li>
-                            <li><a ng-click='proccessClarifResponse($index)'>Answer and respond to all</a></li>
-                            <li><a ng-click='proccessClarifResponse($index)'>Do not answer at this time</a></li>
+                            <li><a ng-click='proccessClarifResponse(0, $index)'>Reread the problem statement</a></li>
+                            <li><a ng-click='proccessClarifResponse(1, $index)'>Come talk to the administers</a></li>
+                            <li><a ng-click='proccessClarifResponse(2, $index)'>Answer and respond to all</a></li>
+                            <li><a ng-click='proccessClarifResponse(3, $index)'>Do not answer at this time</a></li>
                         </ul>
                     </div>
                 </td>

@@ -168,13 +168,14 @@ class SubmitClarificationHandler(BaseHandler):
 
 
 class AdminHandler(BaseHandler):
-    @web.authenticated
-    def get(self):
-        print self.get_current_user_id()[0]
-        print options.admin_whitelist
 
+    def check_whitelist(self):
         if self.get_current_user_id()[0] not in options.admin_whitelist:
             raise web.HTTPError(404)
+
+    @web.authenticated
+    def get(self):
+        self.check_whitelist()
 
         rem = contest.remaining_time()
         webpage = '''<h1>======== DEBUG ========</h1><br>
@@ -192,6 +193,35 @@ class AdminHandler(BaseHandler):
         )
         self.write(webpage)
         # TODO: move logic code out of console.py to here
+
+    @web.authenticated
+    def put(self):
+        self.check_whitelist()
+        option = 0;
+        clarif_id = ''
+        try:
+            option = int(self.get_argument('respNum'))
+            clarif_id = int(self.get_argument('clarifNum'))
+        except Exception:
+            raise web.HTTPError(400)
+
+        print option
+        print clarif_id
+
+        if option == 0:
+            contest.respond_clarif(clarif_id, 'Reread the problem statement.')
+            self.write(json.dumps(True))
+        elif option == 1:
+            contest.respond_clarif(clarif_id, 'Come talk to the administers.')
+            self.write(json.dumps(True))
+        elif option == 2:
+            print 'Please write out your response:'
+            contest.respond_clarif(clarif_id, "temp", False)
+            self.write(json.dumps(True))
+        elif option == 3:
+            self.write(json.dumps(True))
+        else:
+            raise web.HTTPError(400)
 
 
 if __name__ == '__main__':
@@ -220,7 +250,7 @@ if __name__ == '__main__':
         [
             (r'/', IndexHandler),
             (r'/index.html', IndexHandler),
-            (r'/admin/(.*)', AdminHandler),
+            (r'/api/v1/admin', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/metadata', MetadataHandler),

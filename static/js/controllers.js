@@ -72,16 +72,27 @@ contestControllers.controller('HomeCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);
 
-contestControllers.controller('AdminCtrl', ['$scope', '$http',
-    function ($scope, $http) {
+contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window',
+    function ($scope, $http, $cookies, $window) {
       $scope.processAddTimeInput = function(numMin) {
-        submit_url = 'api/v1/admin/add_time/' + numMin;
+        submit_url = 'api/v1/admin' + numMin;
         submit_data = { '_xsrf': $cookies._xsrf, 'content': numMin };
       }
 
       $scope.proccessClarifResponse = function(respNum, clarifNum) {
-        submit_url = 'api/v1/admin/add_time/';
-        submit_data = { '_xsrf': $cookies._xsrf, 'content': respNum };
+        submit_url = 'api/v1/admin';
+        submit_data = { '_xsrf': $cookies._xsrf, 'respNum': respNum, 'clarifNum': clarifNum };
+        $http({
+          method  : 'PUT',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          if (data) {
+            $window.alert("clarif reply successfully submitted");
+          }
+        });
+
       }
     }]);
 

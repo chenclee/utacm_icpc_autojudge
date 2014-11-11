@@ -152,10 +152,13 @@ class Contest:
             private - whether response should be private to user who submitted
                 the request (default: True)
         """
+        print self.clarifs
+        print clarif_id
         try:
             if private:
                 self.clarifs[clarif_id] = (
                     self.clarifs[clarif_id][:3] + (response,))
+                print self.clarifs[clarif_id]
             else:
                 self.clarifs[clarif_id] = (
                     (-1,) + self.clarifs[clarif_id][1:3] + (response,))
