@@ -20,11 +20,11 @@
             <form role="form" ng-submit="processSubmitForm($index)">
                 <div class="form-group">
                     <label for="outputFile">Output File</label>
-                    <input type="file" id="outputFile" fileread="files.output[$index]">
+                    <input type="file" id="outputFile" fileread="files.output[$index]" required>
                 </div>
                 <div class="form-group center-block">
                     <label for="sourceFile">Source File</label>
-                    <input type="file" id="sourceFile" fileread="files.source[$index]">
+                    <input type="file" id="sourceFile" fileread="files.source[$index]" required>
                 </div>
                 <button type="submit" class="btn btn-default center-block">Submit</button>
             </form>
