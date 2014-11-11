@@ -39,6 +39,9 @@
                     <li><a href="#/home">Home</a></li>
                     <li><a href="#/problems">Problems</a></li>
                     <li><a href="#/scoreboard">Scoreboard</a></li>
+                    {% if admin %}
+                    <li><a href="#/admin">Admin Panel</a></li>
+                    {% end %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="#home">{{ escape(current_user["name"]) }}</a></li>

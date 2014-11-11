@@ -31,6 +31,9 @@ class BaseHandler(web.RequestHandler):
         cookie = self.get_current_user()
         return (cookie['email'], cookie['name'])
 
+    def is_admin(self):
+        return self.get_current_user_id()[0] in options.admin_whitelist
+
 
 class AuthLoginHandler(BaseHandler, auth.GoogleMixin):
     @gen.coroutine
@@ -58,7 +61,7 @@ class IndexHandler(BaseHandler):
         # Make sure to send pre-contest page if pre-contest
         # should be asynchronous
         if contest.is_running():
-            self.render('contest.html')
+            self.render('contest.html', admin=self.is_admin())
         else:
             self.render('pre-contest.html')
 
@@ -177,13 +180,10 @@ class SubmitClarificationHandler(BaseHandler):
 
 class AdminHandler(BaseHandler):
 
-    def check_whitelist(self):
-        if self.get_current_user_id()[0] not in options.admin_whitelist:
-            raise web.HTTPError(404)
-
     @web.authenticated
     def get(self):
-        self.check_whitelist()
+        if not self.is_admin():
+            raise web.HTTPError(404)
 
         rem = contest.remaining_time()
         webpage = '''<h1>======== DEBUG ========</h1><br>
@@ -204,7 +204,9 @@ class AdminHandler(BaseHandler):
 
     @web.authenticated
     def put(self):
-        self.check_whitelist()
+        if not self.is_admin():
+            raise web.HTTPError(404)
+
         option = 0;
         clarif_id = ''
         try:
@@ -213,9 +215,6 @@ class AdminHandler(BaseHandler):
         except Exception:
             raise web.HTTPError(400)
 
-        print option
-        print clarif_id
-
         if option == 0:
             contest.respond_clarif(clarif_id, 'Reread the problem statement.')
             self.write(json.dumps(True))
@@ -223,7 +222,6 @@ class AdminHandler(BaseHandler):
             contest.respond_clarif(clarif_id, 'Come talk to the administers.')
             self.write(json.dumps(True))
         elif option == 2:
-            print 'Please write out your response:'
             contest.respond_clarif(clarif_id, "temp", False)
             self.write(json.dumps(True))
         elif option == 3:
