@@ -213,13 +213,44 @@ class SubmitClarificationHandler(BaseHandler):
 
 
 class AdminHandler(BaseHandler):    
-
+    
     @web.authenticated
-    def put(self, put_type):
+    def get(self, value):
         if not self.is_admin():
             raise web.HTTPError(404)
+        elif value == 'frozen':
+            print "status of contest being frozen is: " + str(contest.is_frozen())
+            self.write(json.dumps(contest.is_frozen()))
+        elif value == 'whitelist':
+            self.write(json.dumps(options.admin_whitelist))
+        else:
+            raise web.HTTPError(400)
 
-        if put_type == 'add_time':
+    @web.authenticated
+    def post(self, put_type):
+        if not self.is_admin():
+            raise web.HTTPError(404)
+        elif put_type == 'frozen':
+            new_state = ''
+            try:
+                new_state = self.get_argument('state')
+            except Exception:
+                raise web.HTTPError(400)
+            print(new_state)
+            if new_state == 'unfreeze':
+                contest.freeze_scoreboard(False)
+            else:
+                contest.freeze_scoreboard(True)
+
+        elif put_type == 'whitelist':
+            newAdmin = ''
+            try:
+                new_admin = self.get_argument('newAdmin')
+            except Exception:
+                raise web.HTTPError(400)
+            options.admin_whitelist.append(new_admin)
+
+        elif put_type == 'add_time':
             num_min = 0;
             try:
                 num_min = int(self.get_argument('numMin'))
