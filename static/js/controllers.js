@@ -9,11 +9,11 @@ preContestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout',
           }
           $scope.rawTime = data['remaining_time'];
           $scope.remainingTime = moment($scope.rawTime);
+          $timeout(sync, 5000);
+          for (i = 1000; i <= 4000; i += 1000) {
+            $timeout(tick, i);
+          }
         });
-        $timeout(sync, 5000);
-        for (i = 1000; i <= 4000; i += 1000) {
-          $timeout(tick, i);
-        }
       }
 
       function tick () {
@@ -49,13 +49,13 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
           $scope.scoreboard = data['scoreboard'];
           $scope.clarifications = data['clarifications'];
           $scope.remainingTime = moment($scope.rawTime);
-        });
-        $timeout(sync, 5000);
-        for (i = 1000; i <= 4000; i += 1000) {
-          if ($scope.rawTime > 0) {
-            $timeout(tick, i);
+          $timeout(sync, 5000);
+          for (i = 1000; i <= 4000; i += 1000) {
+            if ($scope.rawTime > 0) {
+              $timeout(tick, i);
+            }
           }
-        }
+        });
       }
 
       function tick () {
@@ -117,10 +117,12 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       if (typeof $rootScope.showSubmit == 'undefined') {
         $rootScope.showSubmit = [];
         $rootScope.ttl = [];
+        $rootScope.ttlText = [];
         $rootScope.tick = [];
         for (probId in probIds) {
           $rootScope.showSubmit.push(false);
           $rootScope.ttl.push(-1);
+          $rootScope.ttlText.push("");
           $rootScope.tick.push(null);
         }
       }
@@ -174,6 +176,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
 
       function tick (index) {
         $rootScope.ttl[index] -= 1;
+        $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
         if ($rootScope.ttl[index] <= 0) {
           $rootScope.showSubmit[index] = false;
           if ($rootScope.tick[index] != null) {
@@ -198,6 +201,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           }
           $rootScope.showSubmit[index] = true;
           $rootScope.ttl[index] = data;
+          $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
           $rootScope.tick[index] = $interval(function () {
             tick(index);
           }, 1000, data);

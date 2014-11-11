@@ -29,10 +29,9 @@
     </head>
     <body ng-controller='MainCtrl'>
         <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-            <div class="navbar-header">
+            <div class="navbar-header" style="width: 25%; min-width: 256px;">
                 <a class="navbar-brand" href="#">ACM Programming Contest</a>
             </div>
-            <span class="navbar-brand navbar-clock">{{!remainingTime}}</span>
             <div class="container">
 
                 <ul class="nav navbar-nav" role="tablist">
@@ -44,6 +43,7 @@
                     {% end %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
+                    <li><a>{{!remainingTime}}</a></li>
                     <li><a href="#home">{{ escape(current_user["name"]) }}</a></li>
                     <li><a href="/auth/logout">{{ _("Logout") }}</a></li>
                 </ul>

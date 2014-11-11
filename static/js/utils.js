@@ -10,3 +10,9 @@ function moment (time) {
   seconds = time % 60;
   return pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2);
 }
+
+function momentMinutes (time) {
+  minutes = parseInt(time / 60) % 60;
+  seconds = time % 60;
+  return pad(minutes, 2) + ":" + pad(seconds, 2);
+}
