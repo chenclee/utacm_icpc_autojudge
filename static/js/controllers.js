@@ -78,8 +78,10 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         
       function initTabs() {
         tabClasses = [];
+        $scope.open = [];
         for (probId in probIds) {
           tabClasses.push("");
+          $scope.open.push(false);
         }
       }
       
@@ -93,8 +95,9 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       
       $scope.setActiveTab = function (tabNum) {
         initTabs();
-        tabClasses[tabNum] = "active";
-        $rootScope.activeTab = tabNum
+        tabClasses[tabNum] = "active panel-primary";
+        $rootScope.activeTab = tabNum;
+        $scope.open[tabNum - 1] = true;
       };
 
       initTabs();
