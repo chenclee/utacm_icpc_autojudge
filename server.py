@@ -65,8 +65,6 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
                 raise web.HTTPError(500, 'Google authentication failed')
 
             user = json.loads(response.body)
-            print user
-            print escape.json_encode(user)
             self.set_secure_cookie('utacm_contest_user', escape.json_encode(user))
             self.redirect('/')
             return
@@ -107,6 +105,7 @@ class MetadataHandler(BaseHandler):
             raise web.HTTPError(503)
         data = {
             'prob_ids': contest_cfg['prob_ids'],
+            'prob_names': contest_cfg['prob_names'],
             'prob_contents': problem_contents,
         }
         self.set_header('Content-Type', 'application/json')
@@ -219,7 +218,6 @@ class AdminHandler(BaseHandler):
         if not self.is_admin():
             raise web.HTTPError(404)
         elif value == 'frozen':
-            print "status of contest being frozen is: " + str(contest.is_frozen())
             self.write(json.dumps(contest.is_frozen()))
         elif value == 'whitelist':
             self.write(json.dumps(options.admin_whitelist))
@@ -236,7 +234,6 @@ class AdminHandler(BaseHandler):
                 new_state = self.get_argument('state')
             except Exception:
                 raise web.HTTPError(400)
-            print(new_state)
             if new_state == 'unfreeze':
                 contest.freeze_scoreboard(False)
             else:
