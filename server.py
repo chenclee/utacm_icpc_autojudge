@@ -65,8 +65,6 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
                 raise web.HTTPError(500, 'Google authentication failed')
 
             user = json.loads(response.body)
-            print user
-            print escape.json_encode(user)
             self.set_secure_cookie('utacm_contest_user', escape.json_encode(user))
             self.redirect('/')
             return
@@ -181,11 +179,11 @@ class SubmitSolutionHandler(BaseHandler):
         try:
             output = DataURI(self.get_argument('outputFile')).data
         except:
-            output = "MALFORMED OUTPUT"
+            raise web.HTTPError(400)
         try:
             source_code = DataURI(self.get_argument('sourceFile')).data
         except:
-            source_code = "MALFORMED SOURCE CODE"
+            raise web.HTTPError(400)
         result = judge.judge_submission(user_id, prob_id, source_code, output)
         if result is None:
             raise web.HTTPError(409)
@@ -219,7 +217,6 @@ class AdminHandler(BaseHandler):
         if not self.is_admin():
             raise web.HTTPError(404)
         elif value == 'frozen':
-            print "status of contest being frozen is: " + str(contest.is_frozen())
             self.write(json.dumps(contest.is_frozen()))
         elif value == 'whitelist':
             self.write(json.dumps(options.admin_whitelist))
@@ -236,7 +233,6 @@ class AdminHandler(BaseHandler):
                 new_state = self.get_argument('state')
             except Exception:
                 raise web.HTTPError(400)
-            print(new_state)
             if new_state == 'unfreeze':
                 contest.freeze_scoreboard(False)
             else:
