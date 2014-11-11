@@ -24,15 +24,12 @@
                 <td>
                     <!-- Split button -->
                     <div class="btn-group" dropdown>
-                        <button type="button" class="btn btn-danger">Choose Response</button>
-                        <button type="button" class="btn btn-danger dropdown-toggle">
-                            <span class="caret"></span>
-                            <span class="sr-only">Split button!</span>
-                        </button>
+                        <button type="button" class="btn btn-primary dropdown-toggle">Choose Response <span class="caret"></span></button>
                         <ul class="dropdown-menu" role="menu">
                             <li><a ng-click='proccessClarifResponse(0, $index)'>Reread the problem statement</a></li>
                             <li><a ng-click='proccessClarifResponse(1, $index)'>Come talk to the administers</a></li>
                             <li><a ng-click='proccessClarifResponse(2, $index)'>Answer and respond to all</a></li>
+                            <li><a ng-click='scoreboardState()'>Test</a></li>
                         </ul>
                     </div>
                 </td>
@@ -45,6 +42,38 @@
         <br>
         <input type="number" ng-model="value">
         <button type="submit" class="btn btn-default" ng-click="processAddTimeInput(value)">Submit</button>
+    </form>
+    <br>
+    <form name="freezeScoreboardForm">
+        <label>Change Scoreboard State</label>
+        <br>
+        <div class="btn-group">
+            <label class="btn btn-primary" ng-model="radioModel" btn-radio="Active" ng-click="someFunction()">Active</label>
+            <label class="btn btn-primary" ng-model="radioModel" btn-radio="Frozen" ng-click="someFunction()">Frozen</label>
+        </div>
+    </form>
+    <br>
+    <div class="panel panel-default">
+    <div class="panel-heading">Admin WhiteList</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="admin in whitelist">
+                <td>{{$index}}</td>
+                <td>"{{admin}}"</td>
+            </tr>
+        </tbody>
+    </table>
     </div>
-</input>
+    <form name="addAdmin">
+        <label>Add Admin (email address):</label>
+        <br>
+        <input type="email" ng-model="text">
+        <button type="submit" class="btn btn-default" ng-click="processAddAdminForm(text)">Submit</button>
+    </form>
 </div>

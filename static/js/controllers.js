@@ -56,6 +56,9 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
             }
           }
         });
+        $http.get('api/v1/admin/whitelist').success(function (data) {
+          $scope.whitelist = data;
+        });
       }
 
       function tick () {
@@ -78,7 +81,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         submit_url = 'api/v1/admin/add_time';
         submit_data = { '_xsrf': $cookies._xsrf, 'numMin': numMin };
         $http({
-          method  : 'PUT',
+          method  : 'POST',
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -89,7 +92,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         submit_url = 'api/v1/admin/clarification';
         submit_data = { '_xsrf': $cookies._xsrf, 'respNum': respNum, 'clarifNum': clarifNum };
         $http({
-          method  : 'PUT',
+          method  : 'POST',
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -98,7 +101,36 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
             $window.alert("clarif reply successfully submitted");
           }
         });
+      }
 
+      $scope.scoreboardState = function(respNum, clarifNum) {
+        submit_url = 'api/v1/admin/frozen';
+        submit_data = { '_xsrf': $cookies._xsrf };
+        $http({
+          method  : 'GET',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          if (data) {
+            $window.alert(data);
+          }
+        });
+      }
+
+      $scope.processAddAdminForm = function(newAdmin) {
+        submit_url = 'api/v1/admin/whitelist';
+        submit_data = { '_xsrf': $cookies._xsrf, 'newAdmin': newAdmin };
+        $http({
+          method  : 'POST',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          if (data) {
+            $window.alert("added new admin");
+          }
+        });
       }
     }]);
 
