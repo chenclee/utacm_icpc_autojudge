@@ -35,11 +35,13 @@ preContestControllers.controller('HomeCtrl', ['$scope', '$http',
 
 var contestControllers = angular.module('contestControllers', []);
 var probIds = [];
+var probNames = [];
 
 contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$rootScope',
     function ($scope, $http, $timeout, $window) {
       $http.get('api/v1/metadata').success(function (data) {
         $scope.probIds = probIds = data['prob_ids'];
+        $scope.probNames = probNames = data['prob_names'];
         $scope.probContents = data['prob_contents'];
       });
 
@@ -84,8 +86,8 @@ contestControllers.controller('HomeCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);
 
-contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window',
-    function ($scope, $http, $cookies, $window) {
+contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window', '$modal', '$log',
+    function ($scope, $http, $cookies, $window, $modal, $log) {
       $scope.processAddTimeInput = function(numMin) {
         submit_url = 'api/v1/admin/add_time';
         submit_data = { '_xsrf': $cookies._xsrf, 'numMin': numMin };
@@ -137,7 +139,34 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           }
         });
       }
+
+      $scope.open = function(size) {
+        var modalInstance = $modal.open({
+          templateUrl: 'myModalContent.html',
+          controller: 'ModalInstanceCtrl',
+          size: size,
+          resolve: {
+          }
+        });
+
+        modalInstance.result.then(function (response) {
+          $scope.response = response;
+        }, function () {
+          $log.info('test ' + $scope.response);
+        });
+      };
     }]);
+
+contestControllers.controller('ModalInstanceCtrl', function ($scope, $modalInstance) {
+
+  $scope.ok = function () {
+    $modalInstance.close($scope.response)
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
 
 contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies', '$interval',
     function ($scope, $http, $rootScope, $window, $cookies, $interval) {

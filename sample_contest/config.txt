@@ -3,4 +3,5 @@
   'penalty': 20,
   'subm_dir': 'submissions',
   'prob_ids': ('A', 'B', 'C'),
+  'prob_names': ('Air Traffic Control', 'Buffed Buffet', 'Counter-Productive'),
 }

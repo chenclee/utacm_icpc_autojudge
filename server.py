@@ -105,6 +105,7 @@ class MetadataHandler(BaseHandler):
             raise web.HTTPError(503)
         data = {
             'prob_ids': contest_cfg['prob_ids'],
+            'prob_names': contest_cfg['prob_names'],
             'prob_contents': problem_contents,
         }
         self.set_header('Content-Type', 'application/json')

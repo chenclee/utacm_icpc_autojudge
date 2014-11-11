@@ -1,0 +1,48 @@
+<h1 class="page-header">Company</h1>
+
+<p>You work at a company that makes products. You currently have a list of products your boss has said you should make.
+Each product has a "value" in dollars that it generates the company upon completion, a time it takes to complete (in minutes), and a difficulty (an integer 0 - 10).
+As you start working at time 0, you get stressed. At the end of each hour, on the hour, you gain 1 level of stress. When you are stressed, it takes you longer to complete the task, depending on the difficulty.</p>
+
+<p>To be explict, let us examine one product. We will call its value V, time T, and difficulty D. If you start work on the product at time t (in minutes), it will take T + (t/60)*D minutes to complete.</p>
+
+<p> For example, if we have a product with T=100 and D=2, if we start work on the product anywhere from time 0 to time 59, it will take 100 minutes to complete. If we start between 60 and 119, it will take 100 + 2*1 = 102 minutes to complete, if we start the task anywhere from minute 120 to minute 179 it will take 104 minutes to complete, etc...</p>
+
+<p>Given that the current time is 0, you have a list of products that you can choose from to work on as specified above, and you have a total time of S minutes until your shift ends, what is the maximum value you can generate the company during this shift?</p>
+
+<h4>Input</h4>
+<p>The first line of input will contain a single integer T, the number of test cases.
+The first line of each test case has two integers, N and S. N is the number of products in your queue, and S is the number of minutes in your shift.
+Each of the next N lines contain a product.
+Each product line has three integers describing the product, V, T, and D, which correspond to the three properties above.</p>
+
+<h4>Constraints</h4>
+<p> It is guaranteed that there are 15 or less products, and that each product takes less than 1000 minutes to complete.</p>
+
+<h4>Output</h4>
+<p>For each test case, print a single integer which is the maximum value you can generate the company</p>
+
+<h4>Sample Input</h4>
+<pre>
+4
+1 10
+5 5 0
+2 30
+3 15 1
+4 10 2
+2 30
+3 20 1
+4 20 2
+3 200
+30 100 0
+5 60 10
+10 40 0
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+5
+7
+4
+45
+</pre>
