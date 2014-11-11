@@ -61,14 +61,13 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
         });
         $http.get('api/v1/admin/frozen').success(function (data) {
           $scope.boardIsFrozen = data;
+          if($scope.boardIsFrozen === "false") {
+            $scope.radioModel = 'Active';
+          }
+          else {
+            $scope.radioModel = 'Frozen';
+          } 
         });
-
-        if($scope.boardIsFrozen === "false") {
-          $scope.radioModel = 'Active';
-        }
-        else {
-          $scope.radioModel = 'Frozen';
-        } 
       }
 
       function tick () {
