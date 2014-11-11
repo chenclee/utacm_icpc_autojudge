@@ -10,7 +10,13 @@ from judge import Judge
 from data_uri import DataURI
 
 
-define('admin_whitelist', default='TODO:replace_own_email',
+define('redirect_url', default='TODO:replace_url',
+       help='Google OAuth2 Redirect URL', type=str)
+define('client_id', default='TODO:replace_id',
+       help='Google OAuth2 Client ID', type=str)
+define('client_secret', default='TODO:replace_secret',
+       help='Google OAuth2 Client Secret', type=str)
+define('admin_whitelist', default='TODO:replace_email',
        help='emails of admins', type=str, multiple=True)
 define('port', default=8000,
        help='start on the given port', type=int)
@@ -35,17 +41,45 @@ class BaseHandler(web.RequestHandler):
         return self.get_current_user_id()[0] in options.admin_whitelist
 
 
-class AuthLoginHandler(BaseHandler, auth.GoogleMixin):
+class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
     @gen.coroutine
     def get(self):
-        if self.get_argument('openid.mode', None):
-            user = yield self.get_authenticated_user()
-            self.set_secure_cookie('utacm_contest_user',
-                                   escape.json_encode(user))
+        if self.get_current_user():
             self.redirect('/')
             return
-        self.authenticate_redirect(ax_attrs=[
-            'name', 'email', 'language', 'username'])
+
+        if self.get_argument('code', False):
+            user = yield self.get_authenticated_user(
+                redirect_uri=self.settings['google_redirect_url'],
+                code=self.get_argument('code'))
+            if not user:
+                self.clear_all_cookies()
+                raise web.HTTPError(500, 'Google authentication failed')
+
+            self.xsrf_token
+            access_token = str(user['access_token'])
+            http_client = self.get_auth_http_client()
+            response = yield http_client.fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token='+access_token)
+            if not response:
+                self.clear_all_cookies()
+                raise web.HTTPError(500, 'Google authentication failed')
+
+            user = json.loads(response.body)
+            print user
+            print escape.json_encode(user)
+            self.set_secure_cookie('utacm_contest_user', escape.json_encode(user))
+            self.redirect('/')
+            return
+        elif self.get_secure_cookie('utacm_contest_user'):
+            self.redirect('/')
+            return
+        else:
+            yield self.authorize_redirect(
+                redirect_uri=self.settings['google_redirect_url'],
+                client_id=self.settings['google_oauth']['key'],
+                scope=['profile', 'email'],
+                response_type='code',
+                extra_params={'approval_prompt': 'auto'})
 
 
 class AuthLogoutHandler(BaseHandler):
@@ -261,6 +295,8 @@ if __name__ == '__main__':
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
         xsrf_cookies=True,
         debug=True,
+        google_redirect_url=options.redirect_url,
+        google_oauth={'key': options.client_id, 'secret': options.client_secret},
     )
 
     application.listen(
