@@ -77,7 +77,10 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       var tabClasses;
         
       function initTabs() {
-        tabClasses = ["","","",""];
+        tabClasses = [];
+        for (probId in probIds) {
+          tabClasses.push("");
+        }
       }
       
       $scope.getTabClass = function (tabNum) {
