@@ -81,12 +81,17 @@ class Contest:
         entries.sort()
         self.cached_scoreboard = tuple(entries)
 
+    def is_frozen(self):
+        return self.frozen
+        
     def freeze_scoreboard(self, freeze):
         """Freezes or unfreezes the scoreboard.
 
         Parameters:
             freeze - whether to freeze the scoreboard
         """
+        if self.frozen == freeze:
+            return
         self.frozen = freeze
         if not self.frozen:
             self.recompute_scoreboard()

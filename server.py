@@ -178,47 +178,46 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
-class AdminHandler(BaseHandler):
+class AdminHandler(BaseHandler):    
 
     @web.authenticated
-    def put(self, clarif):
+    def put(self, put_type):
         if not self.is_admin():
             raise web.HTTPError(404)
 
-        option = 0;
-        clarif_id = ''
-        try:
-            option = int(self.get_argument('respNum'))
-            clarif_id = int(self.get_argument('clarifNum'))
-        except Exception:
-            raise web.HTTPError(400)
+        if put_type == 'add_time':
+            num_min = 0;
+            try:
+                num_min = int(self.get_argument('numMin'))
+            except Exception:
+                raise web.HTTPError(400)
 
-        if option == 0:
-            contest.respond_clarif(clarif_id, 'Reread the problem statement.')
+            contest.extend(num_min * 60)
+
             self.write(json.dumps(True))
-        elif option == 1:
-            contest.respond_clarif(clarif_id, 'Come talk to the administers.')
-            self.write(json.dumps(True))
-        elif option == 2:
-            contest.respond_clarif(clarif_id, "temp", False)
-            self.write(json.dumps(True))
+
+        elif put_type == 'clarification':
+            option = 0;
+            clarif_id = ''
+            try:
+                option = int(self.get_argument('respNum'))
+                clarif_id = int(self.get_argument('clarifNum'))
+            except Exception:
+                raise web.HTTPError(400)
+
+            if option == 0:
+                contest.respond_clarif(clarif_id, 'Reread the problem statement.')
+                self.write(json.dumps(True))
+            elif option == 1:
+                contest.respond_clarif(clarif_id, 'Come talk to the administers.')
+                self.write(json.dumps(True))
+            elif option == 2:
+                contest.respond_clarif(clarif_id, "temp", False)
+                self.write(json.dumps(True))
+            else:
+                raise web.HTTPError(400)
         else:
             raise web.HTTPError(400)
-
-    @web.authenticated
-    def put(self, add_time):
-        if not self.is_admin():
-            raise web.HTTPError(404)
-
-        num_min = 0;
-        try:
-            num_min = int(self.get_argument('numMin'))
-        except Exception:
-            raise web.HTTPError(400)
-
-        contest.extend(num_min * 60)
-
-        self.write(json.dumps(True))
 
 if __name__ == '__main__':
     parse_command_line()
