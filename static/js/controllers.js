@@ -9,11 +9,11 @@ preContestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout',
           }
           $scope.rawTime = data['remaining_time'];
           $scope.remainingTime = moment($scope.rawTime);
+          $timeout(sync, 5000);
+          for (i = 1000; i <= 4000; i += 1000) {
+            $timeout(tick, i);
+          }
         });
-        $timeout(sync, 5000);
-        for (i = 1000; i <= 4000; i += 1000) {
-          $timeout(tick, i);
-        }
       }
 
       function tick () {
@@ -49,13 +49,13 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
           $scope.scoreboard = data['scoreboard'];
           $scope.clarifications = data['clarifications'];
           $scope.remainingTime = moment($scope.rawTime);
-        });
-        $timeout(sync, 5000);
-        for (i = 1000; i <= 4000; i += 1000) {
-          if ($scope.rawTime > 0) {
-            $timeout(tick, i);
+          $timeout(sync, 5000);
+          for (i = 1000; i <= 4000; i += 1000) {
+            if ($scope.rawTime > 0) {
+              $timeout(tick, i);
+            }
           }
-        }
+        });
       }
 
       function tick () {
