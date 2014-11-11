@@ -170,6 +170,9 @@ class SubmitClarificationHandler(BaseHandler):
 class AdminHandler(BaseHandler):
     @web.authenticated
     def get(self):
+        print self.get_current_user_id()[0]
+        print options.admin_whitelist
+
         if self.get_current_user_id()[0] not in options.admin_whitelist:
             raise web.HTTPError(404)
 
@@ -217,7 +220,7 @@ if __name__ == '__main__':
         [
             (r'/', IndexHandler),
             (r'/index.html', IndexHandler),
-            (r'/admin/', AdminHandler),
+            (r'/admin/(.*)', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/metadata', MetadataHandler),

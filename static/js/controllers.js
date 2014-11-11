@@ -72,6 +72,19 @@ contestControllers.controller('HomeCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);
 
+contestControllers.controller('AdminCtrl', ['$scope', '$http',
+    function ($scope, $http) {
+      $scope.processAddTimeInput = function(numMin) {
+        submit_url = 'api/v1/admin/add_time/' + numMin;
+        submit_data = { '_xsrf': $cookies._xsrf, 'content': numMin };
+      }
+
+      $scope.proccessClarifResponse = function(respNum, clarifNum) {
+        submit_url = 'api/v1/admin/add_time/';
+        submit_data = { '_xsrf': $cookies._xsrf, 'content': respNum };
+      }
+    }]);
+
 contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies',
     function ($scope, $http, $rootScope, $window, $cookies) {
       var tabClasses;

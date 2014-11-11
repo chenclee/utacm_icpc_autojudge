@@ -31,6 +31,10 @@ contestApp.config(['$routeProvider',
         templateUrl: '/static/views/scoreboard.html',
         controller: 'ScoreboardCtrl'
       })
+      .when('/admin', {
+        templateUrl: '/static/views/admin.html',
+        controller: 'AdminCtrl'
+      })
       .otherwise({
         redirectTo: '/home'
       });
