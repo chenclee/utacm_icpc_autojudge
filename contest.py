@@ -83,7 +83,7 @@ class Contest:
 
     def is_frozen(self):
         return self.frozen
-        
+
     def freeze_scoreboard(self, freeze):
         """Freezes or unfreezes the scoreboard.
 
@@ -95,6 +95,7 @@ class Contest:
         self.frozen = freeze
         if not self.frozen:
             self.recompute_scoreboard()
+        print self.frozen
 
     def get_scoreboard(self):
         """Returns the current scoreboard or if the scoreboard is frozen,

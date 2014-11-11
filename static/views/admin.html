@@ -48,8 +48,8 @@
         <label>Change Scoreboard State</label>
         <br>
         <div class="btn-group">
-            <label class="btn btn-primary" ng-model="radioModel" btn-radio="Active" ng-click="someFunction()">Active</label>
-            <label class="btn btn-primary" ng-model="radioModel" btn-radio="Frozen" ng-click="someFunction()">Frozen</label>
+            <label class="btn btn-primary" ng-model="radioModel" ng-click="changeState('unfreeze')" btn-radio="'Active'">Active</label>
+            <label class="btn btn-primary" ng-model="radioModel" ng-click="changeState('freeze')" btn-radio="'Frozen'">Frozen</label>
         </div>
     </form>
     <br>
@@ -76,4 +76,5 @@
         <input type="email" ng-model="text">
         <button type="submit" class="btn btn-default" ng-click="processAddAdminForm(text)">Submit</button>
     </form>
-</div>
+    {{boardIsFrozen}}
+</div>  
