@@ -53,15 +53,15 @@
         <label>Add Time to Contest (min):</label>
         <br>
         <input type="number" ng-model="value">
-        <button type="submit" class="btn btn-default" ng-click="processAddTimeInput(value)">Submit</button>
+        <button type="submit" class="btn btn-primary" ng-click="processAddTimeInput(value)">Submit</button>
     </form>
     <br>
     <form name="freezeScoreboardForm">
         <label>Change Scoreboard State</label>
         <br>
         <div class="btn-group">
-            <label class="btn btn-primary" ng-model="radioModel" ng-click="changeState('unfreeze')" btn-radio="'Active'">Active</label>
-            <label class="btn btn-primary" ng-model="radioModel" ng-click="changeState('freeze')" btn-radio="'Frozen'">Frozen</label>
+            <label class="btn btn-success" ng-model="radioModel" ng-click="changeState('unfreeze')" btn-radio="'Active'">Active</label>
+            <label class="btn btn-warning" ng-model="radioModel" ng-click="changeState('freeze')" btn-radio="'Frozen'">Frozen</label>
         </div>
     </form>
     <br>
@@ -86,6 +86,24 @@
         <label>Add Admin (email address):</label>
         <br>
         <input type="email" ng-model="text">
-        <button type="submit" class="btn btn-default" ng-click="processAddAdminForm(text)">Submit</button>
+        <button type="submit" class="btn btn-primary" ng-click="processAddAdminForm(text)">Submit</button>
     </form>
+    <br>
+    <div class="panel panel-default">
+    <div class="panel-heading">Rejudge Problem</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Problem Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="probName in probNames">
+                <td>{{probName}}</td>
+                <td><button type="submit" class="btn btn-danger" ng-click="rejudgeProblem(probIds[$index])">Rejudge</button></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
 </div>  

@@ -211,7 +211,7 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
-class AdminHandler(BaseHandler):    
+class AdminHandler(BaseHandler):
     
     @web.authenticated
     def get(self, value):
@@ -230,6 +230,15 @@ class AdminHandler(BaseHandler):
     def post(self, put_type):
         if not self.is_admin():
             raise web.HTTPError(404)
+        elif put_type == 'rejudge':
+            prob_id = -1
+            try:
+                prob_id = self.get_argument('probId')
+            except Exception:
+                raise web.HTTPError(400)
+            judge.rejudge_problem(prob_id)
+            self.write(json.dumps(True))
+
         elif put_type == 'frozen':
             new_state = ''
             try:
@@ -240,6 +249,7 @@ class AdminHandler(BaseHandler):
                 contest.freeze_scoreboard(False)
             else:
                 contest.freeze_scoreboard(True)
+            self.write(json.dumps(True))
 
         elif put_type == 'whitelist':
             newAdmin = ''
@@ -248,6 +258,7 @@ class AdminHandler(BaseHandler):
             except Exception:
                 raise web.HTTPError(400)
             options.admin_whitelist.append(new_admin)
+            self.write(json.dumps(True))
 
         elif put_type == 'add_time':
             num_min = 0;
@@ -257,7 +268,6 @@ class AdminHandler(BaseHandler):
                 raise web.HTTPError(400)
 
             contest.extend(num_min * 60)
-
             self.write(json.dumps(True))
 
         elif put_type == 'clarifications':

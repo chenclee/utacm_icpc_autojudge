@@ -100,6 +100,17 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
       }
       sync();
 
+      $scope.rejudgeProblem = function(problemId) {
+        submit_url = 'api/v1/admin/rejudge';
+        submit_data = { '_xsrf': $cookies._xsrf, 'probId': problemId };
+        $http({
+          method  : 'POST',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {});
+      }
+
       $scope.processAddTimeInput = function(numMin) {
         submit_url = 'api/v1/admin/add_time';
         submit_data = { '_xsrf': $cookies._xsrf, 'numMin': numMin };

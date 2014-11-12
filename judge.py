@@ -54,6 +54,7 @@ class Judge:
             last_permit = self.permits[user_id][prob_id][-1]
 
             if last_permit['correct']:
+                print 'correct'
                 return None
 
             ttl = last_permit['expiration'] - now
@@ -62,6 +63,7 @@ class Judge:
 
         if (len(self.permits[user_id][prob_id])
                 == self.prob_cfgs[prob_id]['max_attempts']):
+            print 'len max attempts somethign'
             return None
 
         # if another attempt is valid, generate uuid and store data
@@ -143,6 +145,7 @@ class Judge:
             return result
 
     def rejudge_problem(self, prob_id):
+        print 'Rejudging: ' + str(prob_id)
         """Regrade all submissions for a given problem
 
         Parameters:
@@ -151,6 +154,9 @@ class Judge:
         """
         self.contest.nullify_prob(prob_id)
         for user_id in self.permits:
+            print 'Looking at user_id of: ' + str(user_id)
+            print 'For that problem here are the user\'s submissions:'
+            print self.permits[user_id]
             for submission in self.permits[user_id][prob_id]:
                 if 'storage_file' in submission:
                     storage_string = '%s/problems/%s/%s/%s' % (
