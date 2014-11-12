@@ -180,11 +180,11 @@ class SubmitSolutionHandler(BaseHandler):
         try:
             output = DataURI(self.get_argument('outputFile')).data
         except:
-            output = "MALFORMED OUTPUT"
+            raise web.HTTPError(400)
         try:
             source_code = DataURI(self.get_argument('sourceFile')).data
         except:
-            source_code = "MALFORMED SOURCE CODE"
+            raise web.HTTPError(400)
         result = judge.judge_submission(user_id, prob_id, source_code, output)
         if result is None:
             raise web.HTTPError(409)
