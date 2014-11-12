@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Company {
 	public static void main(String[] args) throws Exception {
-		BufferedReader br = new BufferedReader(new FileReader(new File("input.txt")));
+		BufferedReader br = new BufferedReader(new FileReader(new File("input3.txt")));
 		int TC = Integer.parseInt(br.readLine().trim());
 		while (TC-- > 0) {
 			StringTokenizer st = new StringTokenizer(br.readLine().trim());
@@ -20,7 +20,7 @@ public class Company {
 				T[i] = Integer.parseInt(st.nextToken());
 				D[i] = Integer.parseInt(st.nextToken());
 			}
-			long t = System.currentTimeMillis();
+			/*long t = System.currentTimeMillis();
 			long max;
 			max  = bruteForce(N, S, V, T, D);
 			t = System.currentTimeMillis() - t;
@@ -30,7 +30,8 @@ public class Company {
 			max = dp(N, S, V, T, D);
 			t = System.currentTimeMillis() - t;
 
-			System.out.println("dp: " + max + ", took " + t + " millis");
+			System.out.println("dp: " + max + ", took " + t + " millis");*/
+			System.out.println(dp(N, S, V, T, D));
 		}
 	}
 
