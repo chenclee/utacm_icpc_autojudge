@@ -1,0 +1,26 @@
+This problem is an optimization problem, meaning we want to find the optimal value given some constraints.
+
+We want to find the optimal value you can generate in the given time.
+
+The first observation about this problem is that it is always better to not take breaks. In other words, you want to start a new product as soon as you finish the old one, because if you were to start it later, you'd have less time at the end, and the task might take even longer than if you started now because of the stress. Thus, the only time you should be not working is if you get to the end and can't fit any more tasks.
+
+Given the above assumption, we can talk about finding an optimal subset of the tasks to work on, and finding the best ordering of those.
+It doesn't seem that it can be done greedily, since doing the "best" task now might make another task even worse.
+
+However, brute force seems intractible, since 15! will certainly not finish within the time limit.
+
+The solution I used is to break up the problem into figuring out what task to do next when you finish one.
+If we break the state space up in terms of two parameters: the current time, and which tasks have been solved.
+Then, if we say that the current time is t, and the current state is s, we can record maxValue(t, s) for every possible t and s.
+We can do this using dynamic programming. since we know 0 <= t <= S, and each state can be represented as a binary string of length N, with the ith bit representing whether the ith product has been finished. Then, dp[t][s] = the max value i can obtain when i just finished a task at time t and have finished the tasks represented by s.
+We can say that if it is impossible to have just finished a task with the state t and s, then the max value you can get is negative infinity. Then, we start dp[0][0] = 0, because at the start time, having finished 0 tasks, the value we have generated is 0. Then, for each (t,s) pair, if the max value is negative infinity, we ignore it, otherwise we look at all the tasks we haven't completed. For each product p of these, we figure out what time the task would finish (t') starting at time t, which would be t' = t + T[p] + (t/60)*D[p], and then we add the task to the state (s' = s | 1<<p), and then record dp[t][s] + V[p] as a new possible solution for dp[t'][s'] by saying dp[t'][s'] = max(dp[t'][s'], dp[t][s] + V[p]). Then, the maximum value for any pair (t, s) is our solution.
+
+Now that I went through all of this trouble to define all this dp stuff, we better make sure it is actually faster.
+
+If we look at the runtime, there are S * 2^N cells in the dp matrix, and at each cell we look at up to each task, so the total runtime is N * 2^N * S.
+
+Given that the max N is 15, the runtime of the brute force solution is 15!, which is ~10^12, which will take way too long.
+The dp runtime, given the max S of 10000 is 15 * 2^15 * 10000, which is ~5*10^9, which will run in the order of a couple seconds depending on your implementation.
+
+This type of problem is an advanced dynamic programming problem that uses multiple non-obvious aspects of the state. DP Problems using some binary representation as some part of the state space are not uncommon.
+The full solution is available in this folder on github.
