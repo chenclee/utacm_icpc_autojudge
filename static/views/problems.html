@@ -1,4 +1,4 @@
-<div class="col-sm-3 col-md-3 sidebar">
+<div class="col-sm-3 col-md-3 sidebar" style="width: 256px">
 <accordion close-others="true" class="nav nav-sidebar nav-pills nav-stacked">
 <accordion-group ng-class="getTabClass($index + 1)" ng-click="setActiveTab($index + 1)" ng-repeat="probId in probIds" class="panel" is-open="open[$index]" style="cursor: default;">
         <accordion-heading data-toggle="tab">
@@ -32,7 +32,7 @@
     </accordion-group>
 </accordion>
 </div>
-<div class="tab-content col-sm-7 col-md-6 main">
+<div class="tab-content col-sm-8 col-md-8 col-lg-8 main">
     <div ng-class="getTabPaneClass($index + 1)" id="{{probId}}" class="content" ng-repeat="probId in probIds">
         <div ng-bind-html="probContents[probId] | unsafe"></div>
         <div class="voffset8">
