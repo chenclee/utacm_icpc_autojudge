@@ -274,7 +274,12 @@ class AdminHandler(BaseHandler):
                 contest.respond_clarif(clarif_id, 'Come talk to the administers.')
                 self.write(json.dumps(True))
             elif option == 2:
-                contest.respond_clarif(clarif_id, "temp", False)
+                resp_string = ''
+                try:
+                    resp_string = self.get_argument('response')
+                except Exception:
+                    raise web.HTTPError(400)
+                contest.respond_clarif(clarif_id, resp_string, False)
                 self.write(json.dumps(True))
             else:
                 raise web.HTTPError(400)

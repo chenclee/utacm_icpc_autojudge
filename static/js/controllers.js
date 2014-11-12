@@ -99,19 +99,25 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         }).success(function(data) {});
       }
 
-      $scope.proccessClarifResponse = function(respNum, clarifNum) {
+      $scope.processClarifResponse = function(respNum, clarifNum) {
         submit_url = 'api/v1/admin/clarification';
-        submit_data = { '_xsrf': $cookies._xsrf, 'respNum': respNum, 'clarifNum': clarifNum };
-        $http({
-          method  : 'POST',
-          url     : submit_url,
-          data    : $.param(submit_data),
-          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {
-          if (data) {
-            $window.alert("clarif reply successfully submitted");
-          }
-        });
+        var respString = '';
+        if(respNum == 2) {
+          $scope.open(respNum, clarifNum)
+        }
+        else {
+          submit_data = { '_xsrf': $cookies._xsrf, 'respNum': respNum, 'clarifNum': clarifNum, 'respString': '' };
+          $http({
+            method  : 'POST',
+            url     : submit_url,
+            data    : $.param(submit_data),
+            headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+          }).success(function(data) {
+            if (data) {
+              $window.alert("clarif reply successfully submitted");
+            }
+          });
+        }
       }
 
       $scope.processAddAdminForm = function(newAdmin) {
@@ -140,27 +146,46 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         });
       }
 
-      $scope.open = function(size) {
+      $scope.open = function(respNum, clarifNum) {
         var modalInstance = $modal.open({
           templateUrl: 'myModalContent.html',
           controller: 'ModalInstanceCtrl',
-          size: size,
           resolve: {
+            respNum: function () {
+              return respNum;
+            },
+            clarifNum: function() {
+              return clarifNum;
+            }
           }
         });
 
         modalInstance.result.then(function (response) {
-          $scope.response = response;
+          submit_url = 'api/v1/admin/clarification'
+          response['_xsrf'] = $cookies._xsrf;
+              $http({
+                method  : 'POST',
+                url     : submit_url,
+                data    : $.param(response),
+                headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+              }).success(function(data) {
+                if (data) {
+                  $window.alert("clarif reply successfully submitted");
+                }
+              });
         }, function () {
-          $log.info('test ' + $scope.response);
         });
       };
     }]);
 
-contestControllers.controller('ModalInstanceCtrl', function ($scope, $modalInstance) {
+contestControllers.controller('ModalInstanceCtrl', function ($scope, $modalInstance, respNum, clarifNum) {
 
   $scope.ok = function () {
-    $modalInstance.close($scope.response)
+    $modalInstance.close({
+      'respNum': respNum,
+      'clarifNum': clarifNum,
+      'response': $scope.response,
+    });
   };
 
   $scope.cancel = function () {

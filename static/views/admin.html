@@ -39,10 +39,9 @@
                     <div class="btn-group" dropdown>
                         <button type="button" class="btn btn-primary dropdown-toggle">Choose Response <span class="caret"></span></button>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a ng-click='proccessClarifResponse(0, $index)'>Reread the problem statement</a></li>
-                            <li><a ng-click='proccessClarifResponse(1, $index)'>Come talk to the administers</a></li>
-                            <li><a ng-click='open()'>Answer and respond to all</a></li>
-                            <li><a ng-click='scoreboardState()'>Test</a></li>
+                            <li><a ng-click='processClarifResponse(0, $index)'>Reread the problem statement</a></li>
+                            <li><a ng-click='processClarifResponse(1, $index)'>Come talk to the administers</a></li>
+                            <li><a ng-click='processClarifResponse(2, $index)'>Answer and respond to all</a></li>
                         </ul>
                     </div>
                 </td>
@@ -89,4 +88,5 @@
         <input type="email" ng-model="text">
         <button type="submit" class="btn btn-default" ng-click="processAddAdminForm(text)">Submit</button>
     </form>
+    <p>{{response}}</p>
 </div>  
