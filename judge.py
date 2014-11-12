@@ -1,5 +1,5 @@
 import time
-import uuid
+import os
 
 
 class Judge:
@@ -123,10 +123,11 @@ class Judge:
         """
         if not self.valid_permit(user_id, prob_id):
             return None
-
         storage_string = '%s/problems/%s/%s/%s' % (
             self.contest_dir, prob_id,
             user_id, self.permits[user_id][prob_id][-1]['output_file'])
+        if not os.path.exists(os.path.dirname(storage_string)):
+            os.makedirs(os.path.dirname(storage_string))
         self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
         with open(storage_string, 'w') as storage_file:
             storage_file.write(output)
