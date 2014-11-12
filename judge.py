@@ -110,7 +110,6 @@ class Judge:
         with open(input_file, 'r') as in_file:
             return in_file.read()
 
-    # test output sent by user
     def judge_submission(self, user_id, prob_id, source, output):
         """Test output sent from contestant
 
@@ -125,6 +124,12 @@ class Judge:
         if not self.valid_permit(user_id, prob_id):
             return None
 
+        storage_string = '%s/problems/%s/%s/%s' % (
+            self.contest_dir, prob_id,
+            user_id, self.permits[user_id][prob_id][-1]['output_file'])
+        self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
+        with open(storage_string, 'w') as storage_file:
+            storage_file.write(output)
         now = time.time()
         output_file = '%s/problems/%s/%s' % (
             self.contest_dir, prob_id,
@@ -132,5 +137,30 @@ class Judge:
         with open(output_file, 'r') as out_file:
             result = out_file.read().strip() == output.strip()
             self.permits[user_id][prob_id][-1]['correct'] = result
+            self.permits[user_id][prob_id][-1]['time'] = now
             self.contest.submit_result(user_id, prob_id, now, result)
             return result
+
+    def rejudge_problem(self, prob_id):
+        """Regrade all submissions for a given problem
+
+        Parameters:
+            prob_id - problem to check outputs for
+            output - output to test against correct output
+        """
+        self.contest.nullify_prob(prob_id)
+        for user_id in self.permits:
+            for submission in self.permits[user_id][prob_id]:
+                if 'storage_file' in submission:
+                    storage_string = '%s/problems/%s/%s/%s' % (
+                        self.contest_dir, prob_id,
+                        user_id, submission['output_file'])
+                    output_file = '%s/problems/%s/%s' % (
+                        self.contest_dir, prob_id,
+                        submission['output_file'])
+                    with open(output_file, 'r') as out_file:
+                        with open(storage_string, 'r') as storage_file:
+                            result = out_file.read().strip() == storage_file.read().strip()
+                            submission['correct'] = result
+                            self.contest.submit_result(user_id, prob_id,
+                                                       submission['time'], result)
