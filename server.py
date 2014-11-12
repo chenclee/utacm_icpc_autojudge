@@ -221,6 +221,8 @@ class AdminHandler(BaseHandler):
             self.write(json.dumps(contest.is_frozen()))
         elif value == 'whitelist':
             self.write(json.dumps(options.admin_whitelist))
+        elif value == 'clarifications':
+            self.write(json.dumps(contest.get_clarifs(-1)))
         else:
             raise web.HTTPError(400)
 
@@ -258,7 +260,7 @@ class AdminHandler(BaseHandler):
 
             self.write(json.dumps(True))
 
-        elif put_type == 'clarification':
+        elif put_type == 'clarifications':
             option = 0;
             clarif_id = ''
             try:

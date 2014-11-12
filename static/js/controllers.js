@@ -58,18 +58,6 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
             }
           }
         });
-        $http.get('api/v1/admin/whitelist').success(function (data) {
-          $scope.whitelist = data;
-        });
-        $http.get('api/v1/admin/frozen').success(function (data) {
-          $scope.boardIsFrozen = data;
-          if($scope.boardIsFrozen === "false") {
-            $scope.radioModel = 'Active';
-          }
-          else {
-            $scope.radioModel = 'Frozen';
-          } 
-        });
       }
 
       function tick () {
@@ -86,8 +74,32 @@ contestControllers.controller('HomeCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);
 
-contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window', '$modal', '$log',
-    function ($scope, $http, $cookies, $window, $modal, $log) {
+var whitelist = [];
+var allClarifications = [];
+var radioModel = 'Active';
+
+contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window', '$modal', '$timeout',
+    function ($scope, $http, $cookies, $window, $modal, $timeout) {
+      function sync () {
+        $http.get('api/v1/admin/whitelist').success(function (data) {
+          $scope.whitelist = data;
+        });
+        $http.get('api/v1/admin/clarifications').success(function (data) {
+          $scope.allClarifications = data;
+        });
+        $http.get('api/v1/admin/frozen').success(function (data) {
+          $scope.boardIsFrozen = data;
+          if($scope.boardIsFrozen === "false") {
+            $scope.radioModel = 'Active';
+          }
+          else {
+            $scope.radioModel = 'Frozen';
+          } 
+        });
+        $timeout(sync, 5000);
+      }
+      sync();
+
       $scope.processAddTimeInput = function(numMin) {
         submit_url = 'api/v1/admin/add_time';
         submit_data = { '_xsrf': $cookies._xsrf, 'numMin': numMin };
@@ -100,7 +112,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
       }
 
       $scope.processClarifResponse = function(respNum, clarifNum) {
-        submit_url = 'api/v1/admin/clarification';
+        submit_url = 'api/v1/admin/clarifications';
         var respString = '';
         if(respNum == 2) {
           $scope.open(respNum, clarifNum)
@@ -161,7 +173,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         });
 
         modalInstance.result.then(function (response) {
-          submit_url = 'api/v1/admin/clarification'
+          submit_url = 'api/v1/admin/clarifications'
           response['_xsrf'] = $cookies._xsrf;
               $http({
                 method  : 'POST',

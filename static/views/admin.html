@@ -28,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="clarif in clarifications">
+            <tr ng-repeat="clarif in allClarifications">
                 <td>{{$index}}</td>
                 <td>{{clarif[0][1]}}</td>
                 <td>{{clarif[1]}}</td>
@@ -88,5 +88,4 @@
         <input type="email" ng-model="text">
         <button type="submit" class="btn btn-default" ng-click="processAddAdminForm(text)">Submit</button>
     </form>
-    <p>{{response}}</p>
 </div>  
