@@ -199,6 +199,27 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
         }, function () {
         });
       };
+            var tabClasses;
+  
+      function initTabs() {
+        tabClasses = ["","","",""];
+      }
+      
+      $scope.getTabClass = function (tabNum) {
+        return tabClasses[tabNum];
+      };
+      
+      $scope.getTabPaneClass = function (tabNum) {
+        return "tab-pane " + tabClasses[tabNum];
+      }
+      
+      $scope.setActiveTab = function (tabNum) {
+        initTabs();
+        tabClasses[tabNum] = "active";
+      };
+
+      initTabs();
+      $scope.setActiveTab(1);
     }]);
 
 contestControllers.controller('ModalInstanceCtrl', function ($scope, $modalInstance, respNum, clarifNum) {
