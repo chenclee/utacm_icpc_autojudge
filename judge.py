@@ -123,14 +123,14 @@ class Judge:
         """
         if not self.valid_permit(user_id, prob_id):
             return None
-        storage_string = '%s/problems/%s/%s/%s' % (
-            self.contest_dir, prob_id,
-            user_id, self.permits[user_id][prob_id][-1]['output_file'])
+        storage_string = '%s/submissions/%s/%s/%s' % (
+            self.contest_dir, prob_id, user_id,
+            self.permits[user_id][prob_id][-1]['output_file'])
         if not os.path.exists(os.path.dirname(storage_string)):
             os.makedirs(os.path.dirname(storage_string))
-        self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
         with open(storage_string, 'w') as storage_file:
             storage_file.write(output)
+        self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
         now = time.time()
         output_file = '%s/problems/%s/%s' % (
             self.contest_dir, prob_id,
@@ -153,9 +153,7 @@ class Judge:
         for user_id in self.permits:
             for submission in self.permits[user_id][prob_id]:
                 if 'storage_file' in submission:
-                    storage_string = '%s/problems/%s/%s/%s' % (
-                        self.contest_dir, prob_id,
-                        user_id, submission['output_file'])
+                    storage_string = submission['storage_file']
                     output_file = '%s/problems/%s/%s' % (
                         self.contest_dir, prob_id,
                         submission['output_file'])
