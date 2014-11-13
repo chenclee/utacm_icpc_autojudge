@@ -95,7 +95,6 @@ class Contest:
         self.frozen = freeze
         if not self.frozen:
             self.recompute_scoreboard()
-        print self.frozen
 
     def get_scoreboard(self):
         """Returns the current scoreboard or if the scoreboard is frozen,
@@ -116,6 +115,14 @@ class Contest:
             (user_id, prob_id, submit_time, result))
         if not self.frozen:
             self.recompute_scoreboard()
+
+# you pass in the prob_id
+# self.submitted_Runs
+# is equal to
+# list comprehension
+# which means this list contains
+# runs
+# where runs are the runs in self.submitted_runs if and only if the run[1] (the run's problem id) is not equal to the prob_id you are nullifying
 
     def nullify_prob(self, prob_id):
         """Deletes ALL of the results for a given prob_id.
