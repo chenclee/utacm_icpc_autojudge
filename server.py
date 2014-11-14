@@ -237,71 +237,86 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(404)
 
         if put_type == 'rejudge':
-            prob_id = -1
-            try:
-                prob_id = self.get_argument('probId')
-            except Exception:
-                raise web.HTTPError(400)
-            judge.rejudge_problem(prob_id)
-            self.write(json.dumps(True))
+            self.rejudge()
 
         elif put_type == 'frozen':
-            new_state = ''
-            try:
-                new_state = self.get_argument('state')
-            except Exception:
-                raise web.HTTPError(400)
-            if new_state == 'unfreeze':
-                contest.freeze_scoreboard(False)
-            else:
-                contest.freeze_scoreboard(True)
-            self.write(json.dumps(True))
+            self.change_state()
 
         elif put_type == 'whitelist':
-            newAdmin = ''
-            try:
-                new_admin = self.get_argument('newAdmin')
-            except Exception:
-                raise web.HTTPError(400)
-            if new_admin not in options.admin_whitelist:
-                options.admin_whitelist.append(new_admin)
-            self.write(json.dumps(True))
+            self.add_to_whitelist()
 
         elif put_type == 'add_time':
-            num_min = 0;
-            try:
-                num_min = int(self.get_argument('numMin'))
-            except Exception:
-                raise web.HTTPError(400)
-
-            contest.extend(num_min * 60)
-            self.write(json.dumps(True))
+            self.add_time()
 
         elif put_type == 'clarifications':
-            option = 0;
-            clarif_id = ''
+            self.respond_to_clarification();
+        else:
+            raise web.HTTPError(400)
+
+    def rejudge(self):
+        prob_id = -1
+        try:
+            prob_id = self.get_argument('probId')
+        except Exception:
+            raise web.HTTPError(400)
+        judge.rejudge_problem(prob_id)
+        self.write(json.dumps(True))
+
+    def change_state(self):
+        new_state = ''
+        try:
+            new_state = self.get_argument('state')
+        except Exception:
+            raise web.HTTPError(400)
+        if new_state == 'unfreeze':
+            contest.freeze_scoreboard(False)
+        else:
+            contest.freeze_scoreboard(True)
+        self.write(json.dumps(True))
+
+    def add_to_whitelist(self):
+        newAdmin = ''
+        try:
+            new_admin = self.get_argument('newAdmin')
+        except Exception:
+            raise web.HTTPError(400)
+        if new_admin not in options.admin_whitelist:
+            options.admin_whitelist.append(new_admin)
+        self.write(json.dumps(True))
+
+    def add_time(self):
+        num_min = 0;
+        try:
+            num_min = int(self.get_argument('numMin'))
+        except Exception:
+            raise web.HTTPError(400)
+
+        contest.extend(num_min * 60)
+        self.write(json.dumps(True))
+
+    def respond_to_clarification(self):
+        option = 0;
+        clarif_id = ''
+        try:
+            option = int(self.get_argument('respNum'))
+            clarif_id = int(self.get_argument('clarifNum'))
+        except Exception:
+            raise web.HTTPError(400)
+
+        if option == 0:
+            contest.respond_clarif(clarif_id, 'Reread the problem statement.')
+            self.write(json.dumps(True))
+        elif option == 1:
+            contest.respond_clarif(clarif_id, 'Come talk to the administers.')
+            self.write(json.dumps(True))
+        elif option == 2:
+            resp_string = ''
             try:
-                option = int(self.get_argument('respNum'))
-                clarif_id = int(self.get_argument('clarifNum'))
+                resp_string = self.get_argument('response')
             except Exception:
                 raise web.HTTPError(400)
-
-            if option == 0:
-                contest.respond_clarif(clarif_id, 'Reread the problem statement.')
-                self.write(json.dumps(True))
-            elif option == 1:
-                contest.respond_clarif(clarif_id, 'Come talk to the administers.')
-                self.write(json.dumps(True))
-            elif option == 2:
-                resp_string = ''
-                try:
-                    resp_string = self.get_argument('response')
-                except Exception:
-                    raise web.HTTPError(400)
-                contest.respond_clarif(clarif_id, resp_string, False)
-                self.write(json.dumps(True))
-            else:
-                raise web.HTTPError(400)
+            contest.respond_clarif(clarif_id, resp_string, False)
+            self.write(json.dumps(True))
         else:
             raise web.HTTPError(400)
 
