@@ -37,12 +37,18 @@ var contestControllers = angular.module('contestControllers', []);
 var probIds = [];
 var probNames = [];
 
-contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$rootScope',
-    function ($scope, $http, $timeout, $window) {
+contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$rootScope',
+    function ($scope, $http, $interval, $window) {
       $http.get('api/v1/metadata').success(function (data) {
         $scope.probIds = probIds = data['prob_ids'];
         $scope.probNames = probNames = data['prob_names'];
         $scope.probContents = data['prob_contents'];
+        $scope.remainingPermits = data['remaining_permit_counts'];
+        $scope.problemsTimeToSolve = data['problems_time_to_solve'];
+
+        for(var i = 0; i < probIds.length; i++) {
+          $scope.problemsTimeToSolve[probIds[i]] = momentMinutes($scope.problemsTimeToSolve[probIds[i]]);          
+        }
       });
 
       function sync () {
@@ -51,12 +57,7 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
           $scope.scoreboard = data['scoreboard'];
           $scope.clarifications = data['clarifications'];
           $scope.remainingTime = moment($scope.rawTime);
-          $timeout(sync, 5000);
-          for (i = 1000; i <= 4000; i += 1000) {
-            if ($scope.rawTime > 0) {
-              $timeout(tick, i);
-            }
-          }
+          $interval(tick, 1000, 29);
         });
       }
 
@@ -68,6 +69,7 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$root
       }
 
       sync();
+      $interval(sync, 30000);
     }]);
 
 contestControllers.controller('HomeCtrl', ['$scope', '$http',
@@ -120,6 +122,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function(data) {});
+        $scope.addTimeTextBox = null;
       }
 
       $scope.processClarifResponse = function(respNum, clarifNum) {
@@ -152,6 +155,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function(data) {});
+        $scope.addAdminTextBox = null;
       }
 
       $scope.changeState = function(state) {
@@ -304,7 +308,11 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         }).success(function (data) {
           if (data) {
             $window.alert("Clarification submitted successfully!");
-            $scope.clarif[probId] = "";
+            $scope.clarifications.push({
+              'prob_id': probIds[index],
+              'message': $scope.clarif[index],
+            });
+            $scope.clarif[index] = null;
           }
         });
       };
@@ -322,6 +330,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       }
 
       $scope.getPermit = function (index) {
+        $scope.remainingPermits[probIds[index]]--;
         permitUrl = 'api/v1/permits';
         permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index] };
         $http({

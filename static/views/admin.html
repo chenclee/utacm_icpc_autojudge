@@ -24,10 +24,10 @@
                 <tbody>
                     <tr ng-repeat="clarif in allClarifications">
                         <td>{{$index}}</td>
-                        <td>{{clarif[0][1]}}</td>
-                        <td>{{clarif[1]}}</td>
-                        <td>{{clarif[2]}}</td>
-                        <td>{{clarif[3]}}</td>
+                        <td>{{clarif.user_id[1]}}</td>
+                        <td>{{clarif.prob_id}}</td>
+                        <td>{{clarif.message}}</td>
+                        <td>{{clarif.response}}</td>
                         <td>
                             <!-- Split button -->
                             <div class="btn-group" dropdown>
@@ -66,8 +66,8 @@
             <form name="addAdmin">
                 <label>Add Admin (email address):</label>
                 <br>
-                <input type="email" ng-model="text">
-                <button type="submit" class="btn btn-primary" ng-click="processAddAdminForm(text)">Submit</button>
+                <input type="email" ng-model="addAdminTextBox">
+                <button type="submit" class="btn btn-primary" ng-click="processAddAdminForm(addAdminTextBox)">Submit</button>
             </form>
         </div>
         <br>
@@ -86,8 +86,8 @@
             <form name="addTimeForm">
                 <label>Add Time to Contest (min):</label>
                 <br>
-                <input type="number" ng-model="value">
-                <button type="submit" class="btn btn-primary" ng-click="processAddTimeInput(value)">Submit</button>
+                <input type="number" ng-model="addTimeTextBox">
+                <button type="submit" class="btn btn-primary" ng-click="processAddTimeInput(addTimeTextBox)">Submit</button>
             </form>
         </div>
     </div>

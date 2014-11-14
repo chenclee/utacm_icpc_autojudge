@@ -95,7 +95,7 @@ class IndexHandler(BaseHandler):
         if contest.is_running():
             self.render('contest.html', admin=self.is_admin())
         else:
-            self.render('pre-contest.html')
+            self.render('pre-contest.html', admin=self.is_admin())
 
 
 class MetadataHandler(BaseHandler):
@@ -107,6 +107,8 @@ class MetadataHandler(BaseHandler):
             'prob_ids': contest_cfg['prob_ids'],
             'prob_names': contest_cfg['prob_names'],
             'prob_contents': problem_contents,
+            'remaining_permit_counts': judge.get_remaining_permit_counts(self.get_current_user_id()),
+            'problems_time_to_solve': judge.get_problems_time_to_solve()
         }
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
@@ -119,9 +121,11 @@ class UpdatesHandler(BaseHandler):
         # Updates being: remaining time, scoreboard, clarifications
         updates = {
             'remaining_time': contest.remaining_time(),
-            'scoreboard': contest.get_scoreboard(),
-            'clarifications': contest.get_clarifs(self.get_current_user_id()),
         }
+        if contest.is_running():
+            updates['scoreboard'] = contest.get_scoreboard()
+            updates['clarifications'] = contest.get_clarifs(self.get_current_user_id())
+
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(updates))
 
@@ -257,7 +261,8 @@ class AdminHandler(BaseHandler):
                 new_admin = self.get_argument('newAdmin')
             except Exception:
                 raise web.HTTPError(400)
-            options.admin_whitelist.append(new_admin)
+            if new_admin not in options.admin_whitelist:
+                options.admin_whitelist.append(new_admin)
             self.write(json.dumps(True))
 
         elif put_type == 'add_time':
