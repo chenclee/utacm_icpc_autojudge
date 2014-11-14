@@ -120,6 +120,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function(data) {});
+        $scope.addTimeTextBox = null;
       }
 
       $scope.processClarifResponse = function(respNum, clarifNum) {
@@ -152,6 +153,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function(data) {});
+        $scope.addAdminTextBox = null;
       }
 
       $scope.changeState = function(state) {
@@ -307,6 +309,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $scope.clarif[probId] = "";
           }
         });
+        $scope.clarif[index] = null;
       };
 
       function tick (index) {
