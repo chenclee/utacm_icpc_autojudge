@@ -17,9 +17,9 @@ int main()
 		int dollars = rand() % 10000;
 		int pennies = rand() % 100;
 
-		int n = 1 + (rand() % 100);
+		int n = 1 + (rand() % 10);
 
-		cout << dollars << "." << pennies << endl;
+		cout << n << " " << dollars << "." << pennies << endl;
 
 		for (int i = 0; i < n; ++i)
 		{
