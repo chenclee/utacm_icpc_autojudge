@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <string>
 
 #define MAX 1000000
@@ -61,7 +62,7 @@ int main()
 		int money;
 		int numMeals;
 
-		cin >> moneyString >> numMeals;
+		cin >> numMeals >> moneyString;
 
 		money = get(moneyString, 0) * 100 + get(moneyString, moneyString.find(".") + 1);
 
@@ -84,5 +85,7 @@ int main()
 		{
 			cout << "NO" << endl;
 		}
+		
+		fill(ways, ways + MAX + 5, false);
 	}
 }
