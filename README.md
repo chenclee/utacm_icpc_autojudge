@@ -7,8 +7,6 @@ TODO:
 
 Show clarifications below problems
 
-Store submitted solutions
-
 Notification of new clarifications
 
 Visual indicator of problem solved / number of attempts left / disable get permit when no permits left

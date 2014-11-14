@@ -11,7 +11,7 @@
         </thead>
         <tbody class="table-hover">
             <tr ng-repeat="person in scoreboard">
-                <td>{{$index}}</td>
+                <td>{{$index+1}}</td>
                 <td>{{person[1]}}</td>
                 <td ng-repeat="score in person[2] track by $index">
                     {{score}}
