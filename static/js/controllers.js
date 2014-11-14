@@ -43,6 +43,12 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
         $scope.probIds = probIds = data['prob_ids'];
         $scope.probNames = probNames = data['prob_names'];
         $scope.probContents = data['prob_contents'];
+        $scope.remainingPermits = data['remaining_permit_counts'];
+        $scope.problemsTimeToSolve = data['problems_time_to_solve'];
+
+        for(var i = 0; i < probIds.length; i++) {
+          $scope.problemsTimeToSolve[probIds[i]] = momentMinutes($scope.problemsTimeToSolve[probIds[i]]);          
+        }
       });
 
       function sync () {
@@ -324,6 +330,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       }
 
       $scope.getPermit = function (index) {
+        $scope.remainingPermits[probIds[index]]--;
         permitUrl = 'api/v1/permits';
         permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index] };
         $http({

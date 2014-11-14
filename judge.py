@@ -74,6 +74,21 @@ class Judge:
         })
         return int(self.prob_cfgs[prob_id]['time_allowed'])
 
+    def get_remaining_permit_counts(self, user_id):
+        remaining_counts = {}
+        for prob_id in self.prob_cfgs:
+            try:
+                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts'] - len(self.permits[user_id][prob_id])
+            except:
+                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts']
+        return remaining_counts
+
+    def get_problems_time_to_solve(self):
+        times = {}
+        for prob_id in self.prob_cfgs:
+            times[prob_id] = self.prob_cfgs[prob_id]['time_allowed']
+        return times
+
     def valid_permit(self, user_id, prob_id):
         """Test whether a permit is valid
         (eg exists and has not expired)

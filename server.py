@@ -107,6 +107,8 @@ class MetadataHandler(BaseHandler):
             'prob_ids': contest_cfg['prob_ids'],
             'prob_names': contest_cfg['prob_names'],
             'prob_contents': problem_contents,
+            'remaining_permit_counts': judge.get_remaining_permit_counts(self.get_current_user_id()),
+            'problems_time_to_solve': judge.get_problems_time_to_solve()
         }
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))

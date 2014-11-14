@@ -6,7 +6,11 @@
             <span class="badge" style="float: right;" ng-show="TODO">0</span>
             <div class="clearfix"></div>
         </accordion-heading>
-        <button class="btn btn-default btn-sm center-block" ng-click="getPermit($index)" ng-show="!showSubmit[$index]">Attempt to solve</button>
+        <div ng-show="!showSubmit[$index]">
+            <p class="text-center">Remaining Permits: {{ remainingPermits[probId] }}</p>
+            <p class="text-center">Time to Solve: {{ problemsTimeToSolve[probId] }}</p>
+            <button ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index)">Attempt to solve</button>
+        </div>
         <div ng-show="showSubmit[$index]">
             <div class="clearfix">
                 <label for="remainingTime" style="float: left;">Remaining time:</label>
