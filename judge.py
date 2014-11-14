@@ -36,7 +36,7 @@ class Judge:
         with open(path, 'r') as in_file:
             return eval(in_file.read())
 
-    def get_expiring_permit(self, user_id, prob_id):
+    def get_expiring_permit(self, user_id, prob_id, create=True):
         """Return a unique id and keep a record of its expiration date
 
         Parameters:
@@ -62,6 +62,9 @@ class Judge:
 
         if (len(self.permits[user_id][prob_id])
                 == self.prob_cfgs[prob_id]['max_attempts']):
+            return None
+
+        if not create:
             return None
 
         # if another attempt is valid, generate uuid and store data

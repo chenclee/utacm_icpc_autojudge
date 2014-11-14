@@ -7,9 +7,9 @@
             <div class="clearfix"></div>
         </accordion-heading>
         <div ng-show="!showSubmit[$index]">
-            <p class="text-center">Remaining Permits: {{ remainingPermits[probId] }}</p>
+            <p class="text-center">Remaining Attempts: {{ remainingPermits[probId] }}</p>
             <p class="text-center">Time to Solve: {{ problemsTimeToSolve[probId] }}</p>
-            <button ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index)">Attempt to solve</button>
+            <button ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index, true)">Attempt to Solve</button>
         </div>
         <div ng-show="showSubmit[$index]">
             <div class="clearfix">

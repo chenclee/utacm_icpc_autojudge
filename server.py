@@ -141,11 +141,14 @@ class PermitsHandler(BaseHandler):
             raise web.HTTPError(503)
         user_id = self.get_current_user_id()
         prob_id = self.get_argument('content')
+        create = json.loads(self.get_argument('create'))
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(400)
-        permit = judge.get_expiring_permit(user_id, prob_id)
-        if permit is None:
+        permit = judge.get_expiring_permit(user_id, prob_id, create)
+        if permit is None and create:
             raise web.HTTPError(403)
+        elif permit is None and not create:
+            permit = None
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(permit))
 

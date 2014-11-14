@@ -323,15 +323,17 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         }
       }
 
-      $scope.getPermit = function (index) {
+      $scope.getPermit = function (index, create) {
         permitUrl = 'api/v1/permits';
-        permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index] };
+        permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index], 'create': create };
         $http({
           method  : 'POST',
           url     : permitUrl,
           data    : $.param(permitData),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
+          if (data == null && !create)
+            return;
           if (data.is_new)
             $scope.remainingPermits[probIds[index]]--;
           if ($rootScope.tick[index] != null) {
@@ -345,11 +347,17 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             tick(index);
           }, 1000, data.ttl);
         }).error(function (data, status, headers, config) {
-          if (status == 403) {
+          if (create && status == 403) {
             $window.alert("You are out of permits!");
           }
         });
       };
+
+      var i = 0;
+      for (probId in probIds) {
+        $scope.getPermit(i, false);
+        i++;
+      }
 
       $scope.processSubmitForm = function (index) {
         submitUrl = 'api/v1/submit/' + probIds[index] + '/solution';
