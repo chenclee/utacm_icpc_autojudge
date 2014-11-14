@@ -2,6 +2,6 @@
   'duration': 3*60*60,
   'penalty': 20,
   'subm_dir': 'submissions',
-  'prob_ids': ('A', 'B'),
-  'prob_names': ('Company', 'Probe'),
+  'prob_ids': ('A', 'B', 'C', 'D', 'E', 'F'),
+  'prob_names': ('Company', 'Probe', 'Blocks', 'Palindromes', 'Qdoba', 'BST'),
 }
