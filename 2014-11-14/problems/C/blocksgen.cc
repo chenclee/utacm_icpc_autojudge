@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <stack>
 
-#define MAX_BLOCKS 1000000
+#define MAX_BLOCKS 1000
 
 using namespace std;
 
@@ -57,6 +57,8 @@ void simulate(int* values, int n)
 
 int main()
 {
+	srand(time(0));
+	
 	int tests;
 	cin >> tests;
 	cout << tests << endl;
