@@ -1,10 +1,10 @@
 <h1 class="page-header">Company</h1>
 
-<p>You work at a company that makes products. You currently have a list of products your boss has said you should make.
-Each product has a "value" in dollars that it generates the company upon completion, a time it takes to complete (in minutes), and a difficulty (an integer 0 - 10).
+<p>You work at a company that makes products. You currently have a list of products your boss has said you should make. After you finish work on a product, it gets removed from the list.
+Each product has a "value" in dollars that it generates the company upon completion, a time it normally takes to complete (in minutes), and a difficulty (an integer 0 - 10).
 As you start working at time 0, you get stressed. At the end of each hour, on the hour, you gain 1 level of stress. When you are stressed, it takes you longer to complete the task, depending on the difficulty.</p>
 
-<p>To be explict, let us examine one product. We will call its value V, time T, and difficulty D. If you start work on the product at time t (in minutes), it will take T + (t/60)*D minutes to complete.</p>
+<p>To be explict, let us examine one product. We will call its value V, base completion time T, and difficulty D. If you start work on the product at time t (in minutes), it will take T + (t/60)*D minutes to complete, where (t/60) is the stress level.</p>
 
 <p> For example, if we have a product with T=100 and D=2, if we start work on the product anywhere from time 0 to time 59, it will take 100 minutes to complete. If we start between 60 and 119, it will take 100 + 2*1 = 102 minutes to complete, if we start the task anywhere from minute 120 to minute 179 it will take 104 minutes to complete, etc...</p>
 
@@ -17,7 +17,7 @@ Each of the next N lines contain a product.
 Each product line has three integers describing the product, V, T, and D, which correspond to the three properties above.</p>
 
 <h4>Constraints</h4>
-<p> It is guaranteed that there are 15 or less products, that each product takes less than 1000 minutes to complete, and that the total shift time (S) will be 10,000 or less</p>
+<p> It is guaranteed that there are 15 or fewer products, that each product takes less than 1000 minutes to complete, and that the total shift time (S) will be 10,000 minutes or less</p>
 
 <h4>Output</h4>
 <p>For each test case, print a single integer which is the maximum value you can generate the company</p>
