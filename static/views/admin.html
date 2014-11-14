@@ -66,8 +66,8 @@
             <form name="addAdmin">
                 <label>Add Admin (email address):</label>
                 <br>
-                <input type="email" ng-model="text">
-                <button type="submit" class="btn btn-primary" ng-click="processAddAdminForm(text)">Submit</button>
+                <input type="email" ng-model="addAdminTextBox">
+                <button type="submit" class="btn btn-primary" ng-click="processAddAdminForm(addAdminTextBox)">Submit</button>
             </form>
         </div>
         <br>
@@ -86,7 +86,7 @@
             <form name="addTimeForm">
                 <label>Add Time to Contest (min):</label>
                 <br>
-                <input type="number" ng-model="value">
+                <input type="number" ng-model="addTimeTextBox">
                 <button type="submit" class="btn btn-primary" ng-click="processAddTimeInput(value)">Submit</button>
             </form>
         </div>
