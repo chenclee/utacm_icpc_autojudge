@@ -54,9 +54,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="clarif in clarifications">
-                            <td>{{clarif[2]}}</td>
-                            <td>{{clarif[3]}}</td>
+                        <tr ng-repeat="clarif in clarifications | filter:{'prob_id': probId}">
+                            <td>{{clarif.message}}</td>
+                            <td>{{clarif.response}}</td>
                         </tr>
                     </tbody>
                 </table>

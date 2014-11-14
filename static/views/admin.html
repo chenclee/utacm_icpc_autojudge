@@ -24,10 +24,10 @@
                 <tbody>
                     <tr ng-repeat="clarif in allClarifications">
                         <td>{{$index}}</td>
-                        <td>{{clarif[0][1]}}</td>
-                        <td>{{clarif[1]}}</td>
-                        <td>{{clarif[2]}}</td>
-                        <td>{{clarif[3]}}</td>
+                        <td>{{clarif.user_id[1]}}</td>
+                        <td>{{clarif.prob_id}}</td>
+                        <td>{{clarif.message}}</td>
+                        <td>{{clarif.response}}</td>
                         <td>
                             <!-- Split button -->
                             <div class="btn-group" dropdown>

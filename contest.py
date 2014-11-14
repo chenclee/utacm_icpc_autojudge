@@ -144,7 +144,7 @@ class Contest:
         """
         if user_id == -1:
             return tuple(self.clarifs)
-        return tuple(c for c in self.clarifs if c[0] == -1 or c[0] == user_id)
+        return tuple(c for c in self.clarifs if not c['private'] or c['user_id'] == user_id)
 
     def submit_clarif(self, user_id, prob_id, message):
         """Submits a clarification request.
@@ -154,7 +154,9 @@ class Contest:
             prob_id - id of the problem in question
             message - a short description of the clarification request
         """
-        self.clarifs.append((user_id, prob_id, message, None))
+        self.clarifs.append({'user_id': user_id, 'prob_id': prob_id,
+                             'message': message, 'response': None,
+                             'private': True})
 
     def respond_clarif(self, clarif_id, response, private=True):
         """Responds to a clarification request.
@@ -166,12 +168,8 @@ class Contest:
                 the request (default: True)
         """
         try:
-            if private:
-                self.clarifs[clarif_id] = (
-                    self.clarifs[clarif_id][:3] + (response,))
-            else:
-                self.clarifs[clarif_id] = (
-                    (-1,) + self.clarifs[clarif_id][1:3] + (response,))
+            self.clarifs[clarif_id]['response'] = response
+            self.clarifs[clarif_id]['private'] = private
             return True
         except:
             return False

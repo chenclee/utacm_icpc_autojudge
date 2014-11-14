@@ -3,12 +3,16 @@ preContestApp.config(['$routeProvider',
     function($routeProvider) {
       $routeProvider
         .when('/home', {
-          templateUrl: '/static/views/home.html',
-          controller: 'HomeCtrl'
+            templateUrl: '/static/views/home.html',
+            controller: 'HomeCtrl'
+          })
+        .when('/admin', {
+          templateUrl: '/static/views/admin.html',
+          controller: 'AdminCtrl'
         })
-      .otherwise({
-        redirectTo: '/home'
-      });
+        .otherwise({
+          redirectTo: '/home'
+        });
     }]);
 
 var contestApp = angular.module('contestApp', ['ngRoute', 'contestControllers', 'ui.bootstrap', 'ngCookies']);
@@ -19,25 +23,25 @@ contestApp.config(['$routeProvider',
           templateUrl: '/static/views/home.html',
           controller: 'HomeCtrl'
         })
-      .when('/problems', {
-        templateUrl: '/static/views/problems.html',
-        controller: 'ProblemCtrl'
-      })
-      .when('/problems/:probId', {
-        templateUrl: '/static/views/problems.html',
-        controller: 'ProblemCtrl'
-      })
-      .when('/scoreboard', {
-        templateUrl: '/static/views/scoreboard.html',
-        controller: 'ScoreboardCtrl'
-      })
-      .when('/admin', {
-        templateUrl: '/static/views/admin.html',
-        controller: 'AdminCtrl'
-      })
-      .otherwise({
-        redirectTo: '/home'
-      });
+        .when('/problems', {
+          templateUrl: '/static/views/problems.html',
+          controller: 'ProblemCtrl'
+        })
+        .when('/problems/:probId', {
+          templateUrl: '/static/views/problems.html',
+          controller: 'ProblemCtrl'
+        })
+        .when('/scoreboard', {
+          templateUrl: '/static/views/scoreboard.html',
+          controller: 'ScoreboardCtrl'
+        })
+        .when('/admin', {
+          templateUrl: '/static/views/admin.html',
+          controller: 'AdminCtrl'
+        })
+        .otherwise({
+          redirectTo: '/home'
+        });
     }]);
 
 contestApp.filter('unsafe', function($sce) {

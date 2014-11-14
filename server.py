@@ -95,7 +95,7 @@ class IndexHandler(BaseHandler):
         if contest.is_running():
             self.render('contest.html', admin=self.is_admin())
         else:
-            self.render('pre-contest.html')
+            self.render('pre-contest.html', admin=self.is_admin())
 
 
 class MetadataHandler(BaseHandler):
@@ -119,9 +119,11 @@ class UpdatesHandler(BaseHandler):
         # Updates being: remaining time, scoreboard, clarifications
         updates = {
             'remaining_time': contest.remaining_time(),
-            'scoreboard': contest.get_scoreboard(),
-            'clarifications': contest.get_clarifs(self.get_current_user_id()),
         }
+        if contest.is_running():
+            updates['scoreboard'] = contest.get_scoreboard()
+            updates['clarifications'] = contest.get_clarifs(self.get_current_user_id())
+
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(updates))
 
