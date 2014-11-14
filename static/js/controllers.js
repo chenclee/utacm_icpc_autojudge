@@ -277,7 +277,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       
       $scope.getTabPaneClass = function (tabNum) {
         return "tab-pane " + tabClasses[tabNum];
-      }
+      };
       
       $scope.setActiveTab = function (tabNum) {
         initTabs();
@@ -307,7 +307,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $scope.clarif[probId] = "";
           }
         });
-      }
+      };
 
       function tick (index) {
         $rootScope.ttl[index] -= 1;
@@ -345,7 +345,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $window.alert("You are out of permits!");
           }
         });
-      }
+      };
 
       $scope.processSubmitForm = function (index) {
         submitUrl = 'api/v1/submit/' + probIds[index] + '/solution';
@@ -370,7 +370,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $window.alert("Solution incorrect!");
           }
         });
-      }
+      };
     }]);
 
 contestControllers.controller('ScoreboardCtrl', ['$scope', '$http',
