@@ -1,20 +1,22 @@
 <h1 class="page-header">Blocks</h1>
 
-<p>You and your little brother love playing with numbered blocks. You currently have N blocks lined up and sorted in front of you, labeled 1, 2, 3, ..., N. You and your brother have also come up with a game during which you can only do one of two things to the blocks:</p>
+<p>You and your little brother love playing with numbered blocks. You currently have N blocks lined up and sorted in front of you, labeled 1, 2, 3, ..., N, with. You and your brother came up with a game during which you can do one of two things to the blocks:</p>
 
 <ol>
-    <li>Move the first block in the starting line and add it to the top of the tower</li>
-    <li>Take the top block off of the tower and place it at the end of a new line of blocks</li>
+    <li>Move the leftmost block in the starting line and add it to the top of the tower</li>
+    <li>Take the top block off of the tower and place it at the end of a different line of blocks</li>
 </ol>
 
-<p>One day while playing your little brother gives you a series of sequences to transform the standard sorted starting line into while only doing the two operations given above. He wants to see if you can come up with a sequence of moves to create each of the new block lines. He also says it is ok if  you can't find a way to generate the sequence.</p>
+<p>If you have no blocks left, you have to take blocks off the tower. If you have no blocks on your tower, then you have to put one on. The game ends once every block is in the new line.</p>
+
+<p>Your brother decided to challenge you. He arranged the blocks 1 to N into some configuration. According to him, you'll win if you can create that configuration by playing the game. If you can't, you lose.</p>
 
 <h4>Input</h4>
 <p>The first line of input will contain a single integer T, the number of test cases.
 The first line of each test case has an integer, N. The next line has N integers, the ordering of the blocks after your brother rearranged them.</p>
 
 <h4>Constraints</h4>
-<p>There will be no more than 1,000,000 blocks.</p>
+<p>There are at most 10 test cases. There will be no more than 1,000,000 blocks per test case.</p>
 
 <h4>Output</h4>
 <p>For each test case, if the end ordering is not possible, print NO on a single line. If it is possible, print YES on a single line, and then print the operations STACK and PLACE required to make that end ordering.</p>
