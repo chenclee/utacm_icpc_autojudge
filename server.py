@@ -257,7 +257,8 @@ class AdminHandler(BaseHandler):
                 new_admin = self.get_argument('newAdmin')
             except Exception:
                 raise web.HTTPError(400)
-            options.admin_whitelist.append(new_admin)
+            if new_admin not in options.admin_whitelist:
+                options.admin_whitelist.append(new_admin)
             self.write(json.dumps(True))
 
         elif put_type == 'add_time':
