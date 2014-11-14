@@ -38,7 +38,7 @@ var probIds = [];
 var probNames = [];
 
 contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$rootScope',
-    function ($scope, $http, $interval, $window) {
+    function ($scope, $http, $interval, $rootScope, $window) {
       $http.get('api/v1/metadata').success(function (data) {
         $scope.probIds = probIds = data['prob_ids'];
         $scope.probNames = probNames = data['prob_names'];
@@ -46,30 +46,32 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
         $scope.remainingPermits = data['remaining_permit_counts'];
         $scope.problemsTimeToSolve = data['problems_time_to_solve'];
 
-        for(var i = 0; i < probIds.length; i++) {
-          $scope.problemsTimeToSolve[probIds[i]] = momentMinutes($scope.problemsTimeToSolve[probIds[i]]);          
+        for (var i = 0; i < probIds.length; i++) {
+          $scope.problemsTimeToSolve[probIds[i]] = momentMinutes($scope.problemsTimeToSolve[probIds[i]]);
         }
       });
 
-      function sync () {
+      $rootScope.syncUpdates = function () {
         $http.get('api/v1/updates').success(function (data) {
-          $scope.rawTime = data['remaining_time'];
+          if (typeof $rootScope.prevSync !== 'undefined')
+            $interval.cancel($rootScope.prevSync);
+          $rootScope.rawTime = data['remaining_time'];
           $scope.scoreboard = data['scoreboard'];
           $scope.clarifications = data['clarifications'];
-          $scope.remainingTime = moment($scope.rawTime);
-          $interval(tick, 1000, 29);
+          $rootScope.remainingTime = moment($rootScope.rawTime);
+          $rootScope.prevSync = $interval($rootScope.clockTick, 1000, 29);
         });
       }
 
-      function tick () {
-        $scope.rawTime -= 1;
-        if ($scope.rawTime >= 0) {
-          $scope.remainingTime = moment($scope.rawTime);
+      $rootScope.clockTick = function () {
+        $rootScope.rawTime -= 1;
+        if ($rootScope.rawTime >= 0) {
+          $rootScope.remainingTime = moment($rootScope.rawTime);
         }
       }
 
-      sync();
-      $interval(sync, 30000);
+      $rootScope.syncUpdates();
+      $interval($rootScope.syncUpdates, 30000);
     }]);
 
 contestControllers.controller('HomeCtrl', ['$scope', '$http',
@@ -80,27 +82,18 @@ var whitelist = [];
 var allClarifications = [];
 var radioModel = 'Active';
 
-contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$window', '$modal', '$timeout',
-    function ($scope, $http, $cookies, $window, $modal, $timeout) {
+contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$cookies', '$window', '$modal', '$interval',
+    function ($scope, $rootScope, $http, $cookies, $window, $modal, $interval) {
       function sync () {
-        $http.get('api/v1/admin/whitelist').success(function (data) {
-          $scope.whitelist = data;
+        $http.get('api/v1/admin/updates').success(function (data) {
+          $scope.whitelist = data.whitelist;
+          $scope.allClarifications = data.clarifs;
+          $scope.boardIsFrozen = data.frozen;
+          $scope.radioModel = $scope.boardIsFrozen ? 'Frozen' : 'Active';
         });
-        $http.get('api/v1/admin/clarifications').success(function (data) {
-          $scope.allClarifications = data;
-        });
-        $http.get('api/v1/admin/frozen').success(function (data) {
-          $scope.boardIsFrozen = data;
-          if($scope.boardIsFrozen === "false") {
-            $scope.radioModel = 'Active';
-          }
-          else {
-            $scope.radioModel = 'Frozen';
-          } 
-        });
-        $timeout(sync, 5000);
       }
       sync();
+      $interval(sync, 10000);
 
       $scope.rejudgeProblem = function(problemId) {
         submit_url = 'api/v1/admin/rejudge';
@@ -110,7 +103,9 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {});
+        }).success(function(data) {
+          $window.alert("Rejudging problem " + problemId);
+        });
       }
 
       $scope.processAddTimeInput = function(numMin) {
@@ -121,8 +116,10 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {});
-        $scope.addTimeTextBox = null;
+        }).success(function(data) {
+          $scope.addTimeTextBox = null;
+          $rootScope.syncUpdates();
+        });
       }
 
       $scope.processClarifResponse = function(respNum, clarifNum) {
@@ -139,14 +136,14 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
             data    : $.param(submit_data),
             headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
           }).success(function(data) {
-            if (data) {
-              $window.alert("clarif reply successfully submitted");
-            }
+            sync();
           });
         }
       }
 
       $scope.processAddAdminForm = function(newAdmin) {
+        if (newAdmin == null)
+          return;
         submit_url = 'api/v1/admin/whitelist';
         submit_data = { '_xsrf': $cookies._xsrf, 'newAdmin': newAdmin };
         $http({
@@ -154,8 +151,11 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {});
-        $scope.addAdminTextBox = null;
+        }).success(function(data) {
+          $scope.addAdminTextBox = null;
+          sync();
+        });
+
       }
 
       $scope.changeState = function(state) {
@@ -166,11 +166,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function(data) {
-          if (data) {
-            $window.alert("changed state");
-          }
-        });
+        }).success(function (data) {});
       }
 
       $scope.open = function(respNum, clarifNum) {
@@ -196,9 +192,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$http', '$cookies', '$win
                 data    : $.param(response),
                 headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
               }).success(function(data) {
-                if (data) {
-                  $window.alert("clarif reply successfully submitted");
-                }
+                sync();
               });
         }, function () {
         });
@@ -330,7 +324,6 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       }
 
       $scope.getPermit = function (index) {
-        $scope.remainingPermits[probIds[index]]--;
         permitUrl = 'api/v1/permits';
         permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index] };
         $http({
@@ -339,16 +332,18 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           data    : $.param(permitData),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
+          if (data.is_new)
+            $scope.remainingPermits[probIds[index]]--;
           if ($rootScope.tick[index] != null) {
             $interval.cancel($rootScope.tick[index]);
             $rootScope.tick[index] = null;
           }
           $rootScope.showSubmit[index] = true;
-          $rootScope.ttl[index] = data;
+          $rootScope.ttl[index] = data.ttl;
           $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
           $rootScope.tick[index] = $interval(function () {
             tick(index);
-          }, 1000, data);
+          }, 1000, data.ttl);
         }).error(function (data, status, headers, config) {
           if (status == 403) {
             $window.alert("You are out of permits!");

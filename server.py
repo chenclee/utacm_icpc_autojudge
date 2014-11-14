@@ -221,20 +221,22 @@ class AdminHandler(BaseHandler):
     def get(self, value):
         if not self.is_admin():
             raise web.HTTPError(404)
-        elif value == 'frozen':
-            self.write(json.dumps(contest.is_frozen()))
-        elif value == 'whitelist':
-            self.write(json.dumps(options.admin_whitelist))
-        elif value == 'clarifications':
-            self.write(json.dumps(contest.get_clarifs(-1)))
-        else:
+
+        if value != 'updates':
             raise web.HTTPError(400)
+
+        updates = {'frozen': contest.is_frozen(),
+                   'whitelist': options.admin_whitelist,
+                   'clarifs': contest.get_clarifs(-1)}
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(updates))
 
     @web.authenticated
     def post(self, put_type):
         if not self.is_admin():
             raise web.HTTPError(404)
-        elif put_type == 'rejudge':
+
+        if put_type == 'rejudge':
             prob_id = -1
             try:
                 prob_id = self.get_argument('probId')
@@ -329,9 +331,9 @@ if __name__ == '__main__':
         [
             (r'/', IndexHandler),
             (r'/index.html', IndexHandler),
-            (r'/api/v1/admin/(.*)', AdminHandler),
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
+            (r'/api/v1/admin/(.*)', AdminHandler),
             (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/permits', PermitsHandler),

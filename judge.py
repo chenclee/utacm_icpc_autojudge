@@ -58,7 +58,7 @@ class Judge:
 
             ttl = last_permit['expiration'] - now
             if ttl > 0 and last_permit['correct'] is None:
-                return int(ttl)
+                return {'is_new': False, 'ttl': int(ttl)}
 
         if (len(self.permits[user_id][prob_id])
                 == self.prob_cfgs[prob_id]['max_attempts']):
@@ -72,7 +72,7 @@ class Judge:
             'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
             'correct': None
         })
-        return int(self.prob_cfgs[prob_id]['time_allowed'])
+        return {'is_new': True, 'ttl': int(self.prob_cfgs[prob_id]['time_allowed'])}
 
     def get_remaining_permit_counts(self, user_id):
         remaining_counts = {}
