@@ -302,10 +302,13 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         }).success(function (data) {
           if (data) {
             $window.alert("Clarification submitted successfully!");
-            $scope.clarif[probId] = "";
+            $scope.clarifications.push({
+              'prob_id': probIds[index],
+              'message': $scope.clarif[index],
+            });
+            $scope.clarif[index] = null;
           }
         });
-        $scope.clarif[index] = null;
       };
 
       function tick (index) {
