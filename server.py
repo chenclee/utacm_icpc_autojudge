@@ -92,7 +92,7 @@ class IndexHandler(BaseHandler):
         # Serve page
         # Make sure to send pre-contest page if pre-contest
         # should be asynchronous
-        if contest.is_running():
+        if contest.is_running() or contest.is_over():
             self.render('contest.html', admin=self.is_admin())
         else:
             self.render('pre-contest.html', admin=self.is_admin())
@@ -101,7 +101,7 @@ class IndexHandler(BaseHandler):
 class MetadataHandler(BaseHandler):
     @web.authenticated
     def get(self):
-        if not contest.is_running():
+        if not contest.is_running() and not contest.is_over():
             raise web.HTTPError(503)
         data = {
             'prob_ids': contest_cfg['prob_ids'],
@@ -122,7 +122,7 @@ class UpdatesHandler(BaseHandler):
         updates = {
             'remaining_time': contest.remaining_time(),
         }
-        if contest.is_running():
+        if contest.is_running() or contest.is_over():
             updates['scoreboard'] = contest.get_scoreboard()
             updates['clarifications'] = contest.get_clarifs(self.get_current_user_id())
 
@@ -310,7 +310,7 @@ class AdminHandler(BaseHandler):
             contest.respond_clarif(clarif_id, 'Reread the problem statement.')
             self.write(json.dumps(True))
         elif option == 1:
-            contest.respond_clarif(clarif_id, 'Come talk to the administers.')
+            contest.respond_clarif(clarif_id, 'Come talk to the administrators.')
             self.write(json.dumps(True))
         elif option == 2:
             resp_string = ''
