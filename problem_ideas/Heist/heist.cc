@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -22,7 +23,7 @@ bool operator<(const timeSlot& a, const timeSlot& b)
 	return (a.end - a.start + 1) > (b.end - b.start + 1);
 }
 
-// Sort by what..?
+// Sort by value and then by quickest to take
 bool operator<(const item& a, const item& b)
 {
 	if (a.value != b.value)
@@ -30,7 +31,7 @@ bool operator<(const item& a, const item& b)
 		return a.value > b.value;
 	}
 
-	return b.timeToTake < a.timeToTake;
+	return a.timeToTake < b.timeToTake;
 }
 
 int main()
@@ -61,5 +62,29 @@ int main()
 
 		sort(times.begin(), times.end());
 		sort(items.begin(), items.end());
+
+		set<int> used;
+		int maxValue = 0;
+		for (int i = 0; i < k; ++i)
+		{
+			item& it = items[i];
+
+			for (int j = 0; j < n; ++j)
+			{
+				if (used.find(j) != used.end())
+				{
+					continue;
+				}
+
+				if (it.timeToTake <= (times[j].end - times[j].start + 1))
+				{
+					used.insert(j);
+					maxValue += it.value;
+					break;
+				}
+			}
+		}
+
+		cout << maxValue << endl;
 	}
 }
