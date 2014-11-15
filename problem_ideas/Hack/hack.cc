@@ -7,7 +7,7 @@ using namespace std;
 
 string keys[MAX_SIZE];
 
-void xor(string& lock, const string& key)
+void XOR(string& lock, const string& key)
 {
 	for (int i = 0; i < lock.size(); ++i)
 	{
@@ -24,7 +24,7 @@ bool attempt(int n, int binary, string lock)
 
 		if (bit)
 		{
-			xor(lock, keys[keyIndex]);
+			XOR(lock, keys[keyIndex]);
 		}
 
 		++keyIndex;
