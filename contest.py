@@ -27,6 +27,10 @@ class Contest:
         """Returns whether the contest is currently running."""
         return self.start_time <= time.time() < self.end_time
 
+    def is_over(self):
+        """Returns whether the contest is over."""
+        return self.end_time <= time.time()
+
     def remaining_time(self):
         """Returns the remaining time of the contest in seconds."""
         now = time.time()
