@@ -141,6 +141,7 @@ class Judge:
         """
         if not self.valid_permit(user_id, prob_id):
             return None
+        output = '\n'.join([line.strip('\n\r ') for line in output.splitlines()])
         storage_string = '%s/submissions/%s/%s/%s' % (
             self.contest_dir, prob_id, user_id,
             self.permits[user_id][prob_id][-1]['output_file'])
@@ -154,7 +155,8 @@ class Judge:
             self.contest_dir, prob_id,
             self.permits[user_id][prob_id][-1]['output_file'])
         with open(output_file, 'r') as out_file:
-            result = out_file.read().strip() == output.strip()
+            out_file_string = '\n'.join([line.strip('\n\r ') for line in out_file.readlines()])
+            result = out_file_string.strip() == output.strip()
             self.permits[user_id][prob_id][-1]['correct'] = result
             self.permits[user_id][prob_id][-1]['time'] = now
             self.contest.submit_result(user_id, prob_id, now, result)
