@@ -8,43 +8,38 @@
 
 <p>You're sick and tired of losing. You've lost millions to these crooks. You decide to hack the robot when everyone leaves. Luckily for you, the robot stores the location of every card right before it deals. You have to figure out how to use this to your advantage...</p>
 
-<p>You somehow managed to get the robot to second hand deal. What does this mean? It means that the robot can deal the second card from the top instead of the first one. However, your hardware hack is buggy, so once it second hand deals, it has to normally pass out D cards before having the option of doing it again.</p>
+<p>You somehow managed to get the robot to second hand deal. What does this mean? It means that the robot can deal the second card from the top instead of the first one. However, your hardware hack is buggy, so once it second hand deals, it has to normally pass out a single card before having the option of doing it again.</p>
 
 <p>You don't want to play a round that you won't win. So, you've programmed the robot to message you when you'll lose. However, you still need to figure out if you can win or lose a round given the hacks you've made. Write that program.</p>
 
-<p>The robot always deals to the left first, and you will always be the first to the left of the robot. Also, the robot must deal D cards before being able to perform its first second hand deal.</p>
+<p>The robot always deals to the left first, and you will always be the first to the left of the robot. The robot has the option to second hand deal on the first card.</p>
 
 <h4>Input</h4>
 <p>The first line of input will contain a single integer T, the number of test cases.
-The first line of each test case has three integers, N, K, and D. N is the number of cards, K is the number of people playing. D is the number of turns the robot must wait to second hand deal again. The following line has N integers, the ordering of the N cards.</p>
+The first line of each test case has two integers, N and K. N is the number of cards, K is the number of people playing. The following line has N integers, the ordering of the N cards.</p>
 
 <h4>Constraints</h4>
-<p>There are at most 10 test cases. Neither N, M, or D will exceed 1,000. N and M will be positive, but D may be 0.</p>
+<p>There are at most 10 test cases. Neither N or M will exceed 1,000. N and M will be positive.</p>
 
 <h4>Output</h4>
 <p>For each test case, print YES if you can win that round; otherwise print NO.</p>
 
 <h4>Sample Input</h4>
 <pre>
-3
-4 2 2
-1 4 3 2
-6 3 6
-6 5 4 1 2 3
-4 2 1
+2
+4 2
 3 2 1 4
+9 3
+1 2 3 4 5 6 7 8 9
 </pre>
 
 <h4>Sample Output</h4>
 <pre>
-NO
-NO
 YES
+NO
 </pre>
 
 <h4>Explanation of Sample I/O</h4>
-<p>For test case 1, the robot has to wait until 1 and 4 has been passed, since D = 2. That means that you have 1 and your only opponent has 4. No matter if you get 2 or 3 as your next card, you won't beat your opponent's two cards.</p>
+<p>For test case 1, you can take the 3 and give your opponent the 2. Then the robot should second hand deal you the 4, and then give your opponent the 1. Thus, you have a hand sum of 7 and your opponent has one of 3.</p>
 
-<p>For test case 2, you can never second hand deal because D = 6, but you'll tie with everyone else this hand anyway. So, you won't win.</p>
-
-<p>For test case 3, You get the 3 by default. You let your opponent have the 2. You second hand deal to get the 4. Your opponent takes the 1. You have a hand sum of 7 and they of 3, so you win.</p>
+<p>No matter what second hand deals you do, you cannot win.</p>
