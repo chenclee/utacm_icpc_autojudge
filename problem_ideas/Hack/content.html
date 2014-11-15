@@ -1,0 +1,56 @@
+<h1 class="page-header">Hack</h1>
+
+<p>As a top-notch hacker, you... well... have to hack a lot...</p>
+
+<p>Anyway, the way you hack is very unique. You're trying to get past some lock, which you've boiled down to binary. In order to unlock the lock, you have to clear every bit of the lock. Luckily for you, you have some XOR keys. You may use each key however many times you would like on the lock. Each time you use the key, the XOR operation takes place between the lock and key.</p>
+
+<p>You're a seasoned hacker and don't need any explanations, but just in case you do, let's talk about the XOR operation.</p>
+
+<ul>
+	<li>1 XOR 1 == 0</li>
+	<li>0 XOR 0 == 0</li>
+	<li>1 XOR 0 == 1</li>
+	<li>0 XOR 1 == 1</li>
+</ul>
+
+<p>When you want to XOR two binary strings of size N, you line them up in a 2xN matrix (2 rows, N columns) and apply the rules above to every column to get the result</p>
+
+<p>With the given locks you have, can you unlock the lock?</p>
+
+<h4>Input</h4>
+<p>The first line of input will contain a single integer T, the number of test cases.
+The first line of each test case has two integers, N and K. N is the size of all binary strings, keys and lock. K is the number of keys you have. The next line is a binary string of size N, representing the lock. The next lines consists of K binary strings of size N, which are your keys.</p>
+
+<h4>Constraints</h4>
+<p>There are at most 10 test cases. Neither N or K will ever exceed 20 and are positive.</p>
+
+<h4>Output</h4>
+<p>For each test case, print YES if you can unlock the lock; otherwise print NO.</p>
+
+<h4>Sample Input</h4>
+<pre>
+3
+4 2
+1010
+1000 0010
+4 1
+1010
+1010
+4 2
+1101
+1111 0110
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+YES
+YES
+NO
+</pre>
+
+<h4>Explanation of Sample I/O</h4>
+<p>For test case 1, if you apply both of your keys just once, it unlocks!</p>
+
+<p>For test case 2, your one key matches the lock perfectly! How lucky!</p>
+
+<p>For test case 3, there's no way any combination or any number of key attempts will work on this lock. You're just not that great of a hacker...</p>

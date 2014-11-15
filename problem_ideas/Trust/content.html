@@ -1,0 +1,34 @@
+<h1 class="page-header">Trust</h1>
+
+<p>Lately, you suspect that your grunts are stealing some of your money after a heist. This cannot do.</p>
+
+<p>Each time a bank is robbed, you know the absolute minimum and absolute maximum amount of money that any money bag can contain. Fortunately for you, your grunts have no idea of this range; however, you don't want to punish anyone without having just reason. You have to find a way to know if they stole money from the money bags.</p>
+
+<h4>Input</h4>
+<p>The first line of input will contain a single integer T, the number of test cases.
+The only line of each test case has four integers, N, M, X, and Y. N is the number of money bags you've received that day. M is the money you've received. X and Y are both the minimum and maximum amount of money each bag could contain respectively.</p>
+
+<h4>Constraints</h4>
+<p>There are at most 100 test cases. N, X, and Y are all bounded by 10,000. M will not exceed a 32-bit signed integer. N, M, X, and Y are positive.</p>
+
+<h4>Output</h4>
+<p>For each test case, print YES if you know someone stole money; otherwise print NO.</p>
+
+<h4>Sample Input</h4>
+<pre>
+2
+5 100 10 20
+5 0 10 20
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+NO
+NO
+YES
+</pre>
+
+<h4>Explanation of Sample I/O</h4>
+<p>For test case 1, today was a good day - each bag contained the maximum amount of money they could.</p>
+
+<p>For test case 2, clearly someone stole all of your money - there's none left.</p>
