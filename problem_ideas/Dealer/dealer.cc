@@ -7,6 +7,11 @@ using namespace std;
 
 int counts[MAX_SIZE];
 
+int maximize(int* cards, int n)
+{
+	
+}
+
 int main()
 {
 	int tests;
@@ -22,12 +27,6 @@ int main()
 		{
 			cin >> cards[i];
 		}
-
-		for (int i = 0; i < d; ++i)
-		{
-			counts[i % k] += cards[i];
-		}
-
 
 		fill(counts, counts + MAX_SIZE, 0);
 	}
