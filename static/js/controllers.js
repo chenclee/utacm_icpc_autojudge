@@ -126,7 +126,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
         submit_url = 'api/v1/admin/clarifications';
         var respString = '';
         if(respNum == 2) {
-          $scope.open(respNum, clarifNum)
+          $scope.clarifRespModalOpen(respNum, clarifNum)
         }
         else {
           submit_data = { '_xsrf': $cookies._xsrf, 'respNum': respNum, 'clarifNum': clarifNum, 'respString': '' };
@@ -169,10 +169,10 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
         }).success(function (data) {});
       }
 
-      $scope.open = function(respNum, clarifNum) {
+      $scope.clarifRespModalOpen = function(respNum, clarifNum) {
         var modalInstance = $modal.open({
-          templateUrl: 'myModalContent.html',
-          controller: 'ModalInstanceCtrl',
+          templateUrl: 'clarifResponse.html',
+          controller: 'ClarifRespModalCtrl',
           resolve: {
             respNum: function () {
               return respNum;
@@ -197,7 +197,38 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
         }, function () {
         });
       };
-            var tabClasses;
+
+      $scope.newClarification = function(index) {
+        $scope.newClarifModalOpen($scope.probIds[index])
+      }
+
+      $scope.newClarifModalOpen = function(probId) {
+        var modalInstance = $modal.open({
+          templateUrl: 'newClarification.html',
+          controller: 'NewClarifModalCtrl',
+          resolve: {
+            probId: function () {
+              return probId;
+            }
+          }
+        });
+
+        modalInstance.result.then(function (response) {
+          submit_url = 'api/v1/admin/clarification'
+          response['_xsrf'] = $cookies._xsrf;
+              $http({
+                method  : 'POST',
+                url     : submit_url,
+                data    : $.param(response),
+                headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+              }).success(function(data) {
+                sync();
+              });
+        }, function () {
+        });
+      };
+
+      var tabClasses;
   
       function initTabs() {
         tabClasses = ["","","",""];
@@ -220,13 +251,27 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
       $scope.setActiveTab(1);
     }]);
 
-contestControllers.controller('ModalInstanceCtrl', function ($scope, $modalInstance, respNum, clarifNum) {
+contestControllers.controller('ClarifRespModalCtrl', function ($scope, $modalInstance, respNum, clarifNum) {
 
   $scope.ok = function () {
     $modalInstance.close({
       'respNum': respNum,
       'clarifNum': clarifNum,
       'response': $scope.response,
+    });
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
+
+contestControllers.controller('NewClarifModalCtrl', function ($scope, $modalInstance, probId) {
+
+  $scope.ok = function () {
+    $modalInstance.close({
+      'probId': probId,
+      'response': $scope.newClarifResp,
     });
   };
 

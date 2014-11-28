@@ -178,5 +178,14 @@ class Contest:
         except:
             return False
 
+    def create_global_clarif(self, prob_id, response):
+        try:
+            self.clarifs.append({'user_id': -1, 'prob_id': prob_id,
+                             'message': 'Judge Clarification', 'response': response,
+                             'private': False})
+            return True;
+        except:
+            return False;
+
     def get_submissions(self):
         return self.submitted_runs

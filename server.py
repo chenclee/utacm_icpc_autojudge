@@ -253,6 +253,8 @@ class AdminHandler(BaseHandler):
 
         elif put_type == 'clarifications':
             self.respond_to_clarification();
+        elif put_type == 'clarification':
+            self.post_global_clarification();
         else:
             raise web.HTTPError(400)
 
@@ -322,6 +324,17 @@ class AdminHandler(BaseHandler):
             self.write(json.dumps(True))
         else:
             raise web.HTTPError(400)
+
+    def post_global_clarification(self):
+        prob_id = 0;
+        resp_string = ''
+        try:
+            prob_id = self.get_argument('probId')
+            resp_string = self.get_argument('response')
+        except Exception:
+            raise web.HTTPError(400)
+        contest.create_global_clarif(prob_id, resp_string)
+        self.write(json.dumps(True))
 
 if __name__ == '__main__':
     parse_command_line()
