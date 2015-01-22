@@ -10,13 +10,13 @@ from judge import Judge
 from data_uri import DataURI
 
 
-define('redirect_url', default='TODO:replace_url',
+define('redirect_url',
        help='Google OAuth2 Redirect URL', type=str)
-define('client_id', default='TODO:replace_id',
+define('client_id',
        help='Google OAuth2 Client ID', type=str)
-define('client_secret', default='TODO:replace_secret',
+define('client_secret',
        help='Google OAuth2 Client Secret', type=str)
-define('admin_whitelist', default='TODO:replace_email',
+define('admin_whitelist',
        help='emails of admins', type=str, multiple=True)
 define('port', default=8000,
        help='start on the given port', type=int)
@@ -371,7 +371,7 @@ if __name__ == '__main__':
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
         ],
-        cookie_secret='TODO: generate a random cookie',
+        cookie_secret=str(uuid.uuid4()),
         login_url='/auth/login',
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
