@@ -22,7 +22,7 @@
                     </tr>
                 </thead>
                 <tbody>
-		<tr ng-repeat="clarif in allClarifications | hasSomeResponse: clarif.response">
+		<tr ng-repeat="clarif in allClarifications | hasNoResponse: clarif.response">
                         <td>{{$index}}</td>
                         <td>{{clarif.user_id[1]}}</td>
                         <td>{{clarif.prob_id}}</td>
@@ -40,7 +40,7 @@
                             </div>
                         </td>
                     </tr>
-                    <tr ng-repeat="clarif in allClarifications | hasNoResponse: clarif.response">
+                    <tr ng-repeat="clarif in allClarifications | hasSomeResponse: clarif.response">
                         <td>{{$index}}</td>
                         <td>{{clarif.user_id[1]}}</td>
                         <td>{{clarif.prob_id}}</td>
