@@ -84,3 +84,36 @@ contestApp.directive("fileread", [function () {
     }
   }
 }]);
+
+contestApp.filter('hasSomeResponse', [function(){
+    return function(input, param) {
+        var ret = [];
+        if(!angular.isDefined(param)) param = true;
+        angular.forEach(input, function(v, k){
+            if(angular.isDefined(v.response)
+               && v.response) {
+                   v.response = v.response.replace(/^\s*/g, '');
+
+                    v.position = k;
+                    ret.push(v);
+           }
+        });
+        return ret;
+    };
+}]);
+
+contestApp.filter('hasNoResponse', [function(){
+    return function(input, param) {
+        var ret = [];
+        if(!angular.isDefined(param)) param = true;
+        angular.forEach(input, function(v, k){
+            if(!angular.isDefined(v.response)
+               || !v.response) {
+                    v.position = k;
+                    ret.push(v);
+           }
+        });
+        return ret;
+    };
+}]);
+
