@@ -35,13 +35,11 @@ preContestControllers.controller('HomeCtrl', ['$scope', '$http',
 
 var contestControllers = angular.module('contestControllers', []);
 var probIds = [];
-var probNames = [];
 
 contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$rootScope',
     function ($scope, $http, $interval, $rootScope, $window) {
       $http.get('api/v1/metadata').success(function (data) {
         $scope.probIds = probIds = data['prob_ids'];
-        $scope.probNames = probNames = data['prob_names'];
         $scope.probContents = data['prob_contents'];
         $scope.remainingPermits = data['remaining_permit_counts'];
         $scope.problemsTimeToSolve = data['problems_time_to_solve'];
