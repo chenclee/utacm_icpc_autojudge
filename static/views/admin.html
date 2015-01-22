@@ -64,7 +64,7 @@
         <div class="dropdown">
             <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">Create Clarification for Problem  <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-                <li ng-repeat="probName in probNames" role="presentation" ><a ng-click='newClarification($index)' tabindex="-1">{{probName}}</a></li>
+                <li ng-repeat="probId in probIds" role="presentation" ><a ng-click='newClarification($index)' tabindex="-1">{{probId}}</a></li>
             </ul>
         </div>
     </div>
@@ -126,8 +126,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="probName in probNames">
-                        <td>{{probName}}</td>
+                    <tr ng-repeat="probId in probIds">
+                        <td>{{probId}}</td>
                         <td><button type="submit" class="btn btn-danger" ng-click="rejudgeProblem(probIds[$index])">Rejudge</button></td>
                     </tr>
                 </tbody>
