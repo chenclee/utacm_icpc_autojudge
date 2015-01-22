@@ -22,25 +22,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="clarif in allClarifications | hasSomeResponse: clarif.response">
-                        <td>{{$index}}</td>
-                        <td>{{clarif.user_id[1]}}</td>
-                        <td>{{clarif.prob_id}}</td>
-                        <td>{{clarif.message}}</td>
-                        <td>{{clarif.response}}</td>
-                        <td>
-                            <!-- Split button -->
-                            <div class="btn-group" dropdown>
-                                <button type="button" class="btn btn-primary dropdown-toggle">Choose Response <span class="caret"></span></button>
-                                <ul class="dropdown-menu" role="menu">
-                                    <li><a ng-click='processClarifResponse(0, $index)'>Reread the problem statement</a></li>
-                                    <li><a ng-click='processClarifResponse(1, $index)'>Come talk to the administrators</a></li>
-                                    <li><a ng-click='processClarifResponse(2, $index)'>Answer and respond to all</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr ng-repeat="clarif in allClarifications | hasNoResponse: clarif.response">
+                    <tr ng-repeat="clarif in allClarifications">
                         <td>{{$index}}</td>
                         <td>{{clarif.user_id[1]}}</td>
                         <td>{{clarif.prob_id}}</td>

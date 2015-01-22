@@ -50,36 +50,6 @@ contestApp.filter('unsafe', function($sce) {
   };
 });
 
-contestApp.filter('hasSomeResponse', [function(){
-    return function(input, param) {
-        var ret = [];
-        if(!angular.isDefined(param)) param = true;
-        angular.forEach(input, function(v){
-            if(angular.isDefined(v.response)
-               && v.response) {
-                   v.response = v.response.replace(/^\s*/g, '');
-
-                    ret.push(v);
-           }
-        });
-        return ret;
-    };
-}]);
-
-contestApp.filter('hasNoResponse', [function(){
-    return function(input, param) {
-        var ret = [];
-        if(!angular.isDefined(param)) param = true;
-        angular.forEach(input, function(v){
-            if(!angular.isDefined(v.response)
-               || !v.response) {
-                    ret.push(v);
-           }
-        });
-        return ret;
-    };
-}]);
-
 contestApp.directive('file', function(){
   return {
     scope: {
