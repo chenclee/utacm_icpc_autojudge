@@ -42,6 +42,7 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
         $scope.probIds = probIds = data['prob_ids'];
         $scope.probContents = data['prob_contents'];
         $scope.remainingPermits = data['remaining_permit_counts'];
+        $scope.solved = data['solved'];
         $scope.problemsTimeToSolve = data['problems_time_to_solve'];
 
         for (var i = 0; i < probIds.length; i++) {
@@ -382,7 +383,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $rootScope.tick[index] = null;
           }
           if (data === 'solved') {
-            $scope.remainingPermits[probIds[index]] = -1;
+            $scope.solved[probIds[index]] = true;
             return;
           }
           if (data.is_new)
@@ -424,7 +425,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
           if (data) {
-            $scope.remainingPermits[probIds[index]] = -1;
+            $scope.solved[probIds[index]] = true;
             $window.alert("Solution accepted!");
           } else {
             $window.alert("Solution incorrect!");

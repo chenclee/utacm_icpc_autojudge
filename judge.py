@@ -77,6 +77,15 @@ class Judge:
         })
         return {'is_new': True, 'ttl': int(self.prob_cfgs[prob_id]['time_allowed'])}
 
+    def get_solved_problems(self, user_id):
+        solved = {}
+        for prob_id in self.prob_cfgs:
+            try:
+                solved[prob_id] = self.permits[user_id][prob_id][-1]['correct']
+            except:
+                solved[prob_id] = False
+        return solved
+
     def get_remaining_permit_counts(self, user_id):
         remaining_counts = {}
         for prob_id in self.prob_cfgs:

@@ -7,14 +7,10 @@
             <div class="clearfix"></div>
         </accordion-heading>
         <div ng-show="!showSubmit[$index]">
-            <div ng-show="remainingPermits[probId] >= 0">
-                <p class="text-center">Remaining Attempts: {{ remainingPermits[probId] }}</p>
-                <p class="text-center">Time to Solve: {{ problemsTimeToSolve[probId] }}</p>
-                <button ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index, true)">Attempt to Solve</button>
-            </div>
-            <div ng-show="remainingPermits[probId] < 0">
-                <button disabled class="btn btn-default btn-sm center-block">Solved</button>
-            </div>
+            <p class="text-center">Remaining Attempts: {{ remainingPermits[probId] }}</p>
+            <p class="text-center">Time to Solve: {{ problemsTimeToSolve[probId] }}</p>
+            <button ng-show="!solved[probId]" ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index, true)">Attempt to Solve</button>
+            <button disabled ng-show="solved[probId]" class="btn btn-default btn-sm center-block">Already Solved</button>
         </div>
         <div ng-show="showSubmit[$index]">
             <div class="clearfix">
