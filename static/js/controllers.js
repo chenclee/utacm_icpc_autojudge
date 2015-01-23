@@ -435,11 +435,11 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
             $scope.solved[probIds[index]] = true;
             setTimeout(function () {
                 $window.alert("Solution accepted!");
-            }, 1000);
+            }, 100);
           } else {
             setTimeout(function () {
                 $window.alert("Solution incorrect!");
-            }, 1000);
+            }, 100);
           }
         });
       };
