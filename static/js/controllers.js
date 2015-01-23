@@ -324,9 +324,9 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       $scope.setActiveTab = function (tabNum) {
         initTabs();
         tabClasses[tabNum] = "active ";
-        if ($scope.solved[probIds[tabNum + 1]]) {
+        if ($scope.solved[probIds[tabNum - 1]]) {
             tabClasses[tabNum] += "panel-success";
-        } else if ($scope.remainingPermits[probIds[tabNum + 1]] >= 0) {
+        } else if ($scope.remainingPermits[probIds[tabNum - 1]] >= 0) {
             tabClasses[tabNum] += "panel-primary";
         } else {
             tabClasses[tabNum] += "panel-danger";
