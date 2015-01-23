@@ -314,7 +314,13 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       }
       
       $scope.getTabClass = function (tabNum) {
-        return tabClasses[tabNum];
+        if ($scope.solved[probIds[tabNum - 1]]) {
+            return tabClasses[tabNum] + " panel-success";
+        } else if ($scope.remainingPermits[probIds[tabNum - 1]] == 0) {
+            return tabClasses[tabNum] + " panel-danger";
+        } else if ($rootScope.activeTab == tabNum) {
+            return tabClasses[tabNum] + " panel-primary";
+        }
       };
       
       $scope.getTabPaneClass = function (tabNum) {
@@ -323,14 +329,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       
       $scope.setActiveTab = function (tabNum) {
         initTabs();
-        tabClasses[tabNum] = "active ";
-        if ($scope.solved[probIds[tabNum - 1]]) {
-            tabClasses[tabNum] += "panel-success";
-        } else if ($scope.remainingPermits[probIds[tabNum - 1]] > 0) {
-            tabClasses[tabNum] += "panel-primary";
-        } else {
-            tabClasses[tabNum] += "panel-danger";
-        }
+        tabClasses[tabNum] = "active";
         $rootScope.activeTab = tabNum;
         $scope.open[tabNum - 1] = true;
       };
