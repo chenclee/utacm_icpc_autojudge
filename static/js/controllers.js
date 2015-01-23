@@ -317,7 +317,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         if ($scope.solved[probIds[tabNum - 1]]) {
             return tabClasses[tabNum] + " panel-success";
         } else if ($scope.remainingPermits[probIds[tabNum - 1]] == 0
-                && !$rootScope.showSubmit[index]) {
+                && !$rootScope.showSubmit[tabNum - 1]) {
             return tabClasses[tabNum] + " panel-danger";
         } else if ($rootScope.activeTab == tabNum) {
             return tabClasses[tabNum] + " panel-primary";
