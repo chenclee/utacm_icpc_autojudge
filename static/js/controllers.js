@@ -234,8 +234,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
       }
       
       $scope.getTabClass = function (tabNum) {
-        return tabClasses[tabNum]
-            + ($scope.solved[probIds[tabNum]] ? " panel-success" : "");
+        return tabClasses[tabNum];
       };
       
       $scope.getTabPaneClass = function (tabNum) {
@@ -324,7 +323,8 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       
       $scope.setActiveTab = function (tabNum) {
         initTabs();
-        tabClasses[tabNum] = "active panel-primary";
+        tabClasses[tabNum] = "active "
+            + ($scope.solved[probIds[tabNum]] ? "panel-success" : "panel-primary");
         $rootScope.activeTab = tabNum;
         $scope.open[tabNum - 1] = true;
       };
