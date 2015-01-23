@@ -433,9 +433,13 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         }).success(function (data) {
           if (data) {
             $scope.solved[probIds[index]] = true;
-            $window.alert("Solution accepted!");
+            setTimeout(function () {
+                $window.alert("Solution accepted!");
+            }, 1000);
           } else {
-            $window.alert("Solution incorrect!");
+            setTimeout(function () {
+                $window.alert("Solution incorrect!");
+            }, 1000);
           }
         });
       };
