@@ -234,7 +234,8 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
       }
       
       $scope.getTabClass = function (tabNum) {
-        return tabClasses[tabNum];
+        return tabClasses[tabNum]
+            + ($scope.solved[probIds[tabNum]] ? " panel-success" : "");
       };
       
       $scope.getTabPaneClass = function (tabNum) {
