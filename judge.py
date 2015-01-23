@@ -43,7 +43,7 @@ class Judge:
             user_id - unique user id
             prob_id - problem statement id
 
-        Return - returns ttl or None if the max number
+        Return - returns {'is_new', 'ttl'} or None if the max number
                  of permits for the user and problem has been reached.
         """
         if user_id not in self.permits:
@@ -54,7 +54,7 @@ class Judge:
             last_permit = self.permits[user_id][prob_id][-1]
 
             if last_permit['correct']:
-                return None
+                return "solved"
 
             ttl = last_permit['expiration'] - now
             if ttl > 0 and last_permit['correct'] is None:

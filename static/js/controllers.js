@@ -377,12 +377,16 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         }).success(function (data) {
           if (data == null && !create)
             return;
-          if (data.is_new)
-            $scope.remainingPermits[probIds[index]]--;
           if ($rootScope.tick[index] != null) {
             $interval.cancel($rootScope.tick[index]);
             $rootScope.tick[index] = null;
           }
+          if (data === 'solved') {
+            $scope.remainingPermits[probIds[index]] = -1;
+            return;
+          }
+          if (data.is_new)
+            $scope.remainingPermits[probIds[index]]--;
           $rootScope.showSubmit[index] = true;
           $rootScope.ttl[index] = data.ttl;
           $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
