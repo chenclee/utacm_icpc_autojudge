@@ -424,6 +424,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
           if (data) {
+            $scope.remainingPermits[probIds[index]] = -1;
             $window.alert("Solution accepted!");
           } else {
             $window.alert("Solution incorrect!");
