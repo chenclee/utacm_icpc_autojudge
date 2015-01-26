@@ -1,5 +1,7 @@
 import time
 import os
+import pickle
+import datetime
 
 
 class Judge:
@@ -197,3 +199,7 @@ class Judge:
                             submission['correct'] = result
                             self.contest.submit_result(user_id, prob_id,
                                                        submission['time'], result)
+    def save_data(self):
+        """Pickle permit data structure"""
+        with open(str(datetime.datetime.now()) + '.permits.data', 'w') as f:
+            pickle.dump(self.permits, f)

@@ -1,6 +1,8 @@
 import json
 import os
 import uuid
+import signal
+import sys
 
 from tornado import ioloop, web, auth, httpserver, gen, escape
 from tornado.options import options, parse_command_line, define
@@ -386,4 +388,11 @@ if __name__ == '__main__':
         port=options.port,
         max_buffer_size=128*1024,
     )
+    
+    def save_data(a, b):
+        judge.save_data()
+        sys.exit(1)
+    
+    signal.signal(signal.SIGINT, save_data)
+    
     ioloop.IOLoop.instance().start()
