@@ -26,6 +26,8 @@ define('contest_dir', default='contest',
        help='path to the contest files', type=str)
 define('delay', default=15*60,
        help='delay (in seconds) before starting the contest', type=int)
+define('database', default='data.db',
+       help='sqlite3 database to connect to', type=str)
 
 
 class BaseHandler(web.RequestHandler):
@@ -358,7 +360,7 @@ if __name__ == '__main__':
 
     contest = Contest(options.delay, contest_cfg['duration'],
                       contest_cfg['prob_ids'], contest_cfg['penalty'])
-    judge = Judge(contest, contest_cfg['prob_ids'], options.contest_dir)
+    judge = Judge(contest, contest_cfg['prob_ids'], options.contest_dir, options.database)
 
     application = web.Application(
         [

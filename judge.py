@@ -2,11 +2,12 @@ import time
 import os
 import pickle
 import datetime
+import sqlite3 as lite
 
 
 class Judge:
 
-    def __init__(self, contest, prob_ids, contest_dir):
+    def __init__(self, contest, prob_ids, contest_dir, database):
         """Read in config files for problem set
 
         contest - pointer to contest state obj
@@ -25,6 +26,11 @@ class Judge:
         self.prob_cfgs = (
             {prob_id: self.load_cfg(prob_id) for prob_id in prob_ids})
         self.submitted_runs = {}
+	self.persons = {}
+        self.connection = lite.connect(database)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS names(uuid INTEGER UNIQUE, name TEXT, email TEXT)")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS attempts(uuid INTEGER, problem TEXT, attempt INTEGER, input_file TEXT, output_file TEXT, expiration REAL, time REAL, storage_file TEXT, correct INTEGER, UNIQUE(uuid, problem, attempt))")
 
     def load_cfg(self, prob_id):
         """Read configuration file for a problem statement
@@ -50,6 +56,8 @@ class Judge:
         """
         if user_id not in self.permits:
             self.permits[user_id] = {prob_id: [] for prob_id in self.prob_cfgs}
+	    self.persons[user_id] = len(self.permits)-1
+            self.cursor.execute("INSERT INTO names(uuid, name, email) VALUES (?, ?, ?)", (len(self.permits)-1, user_id[0], user_id[1]))
 
         now = time.time()
         if len(self.permits[user_id][prob_id]) > 0:
@@ -77,6 +85,8 @@ class Judge:
             'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
             'correct': None
         })
+	self.cursor.execute("INSERT INTO attempts(uuid, problem, attempt, input_file, output_file, expiration) VALUES(?, ?, ?, ?, ?, ?)",
+	    (self.persons[user_id], prob_id, permit_num, self.prob_cfgs[prob_id]['inputs'][permit_num], self.prob_cfgs[prob_id]['outputs'][permit_num], self.permits[user_id][prob_id][-1]['expiration']))
         return {'is_new': True, 'ttl': int(self.prob_cfgs[prob_id]['time_allowed'])}
 
     def get_solved_problems(self, user_id):
@@ -176,6 +186,8 @@ class Judge:
             self.permits[user_id][prob_id][-1]['correct'] = result
             self.permits[user_id][prob_id][-1]['time'] = now
             self.contest.submit_result(user_id, prob_id, now, result)
+	    self.cursor.execute("UPDATE attempts SET correct = ?, time = ?, storage_file = ? WHERE uuid = ? AND problem = ? AND attempt = ?",
+		(result, now, storage_string, self.persons[user_id], prob_id, len(self.permits[user_id][prob_id])-1))
             return result
 
     def rejudge_problem(self, prob_id):
@@ -203,3 +215,5 @@ class Judge:
         """Pickle permit data structure"""
         with open(str(datetime.datetime.now()) + '.permits.data', 'w') as f:
             pickle.dump(self.permits, f)
+        self.connection.commit()
+        self.connection.close()
