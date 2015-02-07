@@ -418,7 +418,7 @@ if __name__ == '__main__':
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/admin/(.*)', AdminHandler),
-            (r'/api/v1/log/(.*)' LogHandler),
+            (r'/api/v1/log/(.*)', LogHandler),
             (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/permits', PermitsHandler),
