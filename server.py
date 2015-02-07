@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import uuid
 import signal
@@ -68,6 +69,7 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
 
             user = json.loads(response.body)
             self.set_secure_cookie('utacm_contest_user', escape.json_encode(user))
+            logging.info(self.get_current_user_id() + " just logged in.")
             self.redirect('/')
             return
         elif self.get_secure_cookie('utacm_contest_user'):
@@ -84,6 +86,10 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):
+        try:
+            logging.info(self.get_current_user_id() + " just logged out.")
+        except:
+            pass
         self.clear_cookie('utacm_contest_user')
         self.write("You are now logged out.")
 
@@ -94,6 +100,10 @@ class IndexHandler(BaseHandler):
         # Serve page
         # Make sure to send pre-contest page if pre-contest
         # should be asynchronous
+        try:
+            logging.info(self.get_current_user_id() + " requested the webpage.")
+        except:
+            pass
         if contest.is_running() or contest.is_over():
             self.render('contest.html', admin=self.is_admin())
         else:
@@ -144,13 +154,36 @@ class PermitsHandler(BaseHandler):
         user_id = self.get_current_user_id()
         prob_id = self.get_argument('content')
         create = json.loads(self.get_argument('create'))
+
+        try:
+            logging.info("%s requested a %spermit for prob %s" % (user_id, "new " if create else "", prob_id))
+        except:
+            pass
+
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(400)
         permit = judge.get_expiring_permit(user_id, prob_id, create)
         if permit is None and create:
+            try:
+                logging.info("%s's permit request rejected. Max requested already." % (user_id,))
+            except:
+                pass
             raise web.HTTPError(403)
         elif permit is None and not create:
+            try:
+                logging.info("%s requested permit history. No permits issued." % (user_id,))
+            except:
+                pass
             permit = None
+        else:
+            try:
+                if create:
+                    logging.info("%s issued permit %s." % (user_id, permit))
+                else:
+                    logging.info("%s was previously issued permit %s." % (user_id, permit))
+            except:
+                pass
+
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(permit))
 
