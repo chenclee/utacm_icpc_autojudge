@@ -220,6 +220,20 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
+class LogHandler(BaseHandler):
+    @web.authenticated
+    def get(self, value):
+        if not self.is_admin():
+            raise web.HTTPError(404)
+        elif value != 'permits':
+            raise web.HTTPError(400)
+
+        self.set_header('Content-Type', 'application/json')
+        if value == 'permits':
+            self.write(json.dumps(judge.save_data()))
+
+
+
 class AdminHandler(BaseHandler):
     
     @web.authenticated
@@ -367,6 +381,7 @@ if __name__ == '__main__':
             (r'/auth/login', AuthLoginHandler),
             (r'/auth/logout', AuthLogoutHandler),
             (r'/api/v1/admin/(.*)', AdminHandler),
+            (r'/api/v1/log/(.*)' LogHandler),
             (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/permits', PermitsHandler),
