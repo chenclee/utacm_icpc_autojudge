@@ -290,20 +290,18 @@ class AdminHandler(BaseHandler):
 
         if put_type == 'rejudge':
             self.rejudge()
-
+        elif put_type == 'clear':
+            self.clear()
         elif put_type == 'frozen':
             self.change_state()
-
         elif put_type == 'whitelist':
             self.add_to_whitelist()
-
         elif put_type == 'add_time':
             self.add_time()
-
         elif put_type == 'clarifications':
-            self.respond_to_clarification();
+            self.respond_to_clarification()
         elif put_type == 'clarification':
-            self.post_global_clarification();
+            self.post_global_clarification()
         else:
             raise web.HTTPError(400)
 
@@ -315,6 +313,10 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
         judge.rejudge_problem(prob_id)
         self.write(json.dumps(True))
+
+    def clear(self):
+        problem_contents = {prob_id: get_problem_content(prob_id)
+                            for prob_id in contest_cfg['prob_ids']}
 
     def change_state(self):
         new_state = ''
@@ -385,20 +387,22 @@ class AdminHandler(BaseHandler):
         contest.create_global_clarif(prob_id, resp_string)
         self.write(json.dumps(True))
 
+
+def get_problem_content(prob_id):
+    content_path = os.path.join(options.contest_dir,
+                                'problems',
+                                prob_id,
+                                'content.html')
+    with open(content_path, 'r') as in_file:
+        return in_file.read()
+
+
 if __name__ == '__main__':
     parse_command_line()
 
     contest_cfg_path = os.path.join(options.contest_dir, 'config.txt')
     with open(contest_cfg_path, 'r') as in_file:
         contest_cfg = eval(in_file.read())
-
-    def get_problem_content(prob_id):
-        content_path = os.path.join(options.contest_dir,
-                                    'problems',
-                                    prob_id,
-                                    'content.html')
-        with open(content_path, 'r') as in_file:
-            return in_file.read()
 
     problem_contents = {prob_id: get_problem_content(prob_id)
                         for prob_id in contest_cfg['prob_ids']}
@@ -427,7 +431,7 @@ if __name__ == '__main__':
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
         xsrf_cookies=True,
-        debug=True,
+        debug=False,
         google_redirect_url=options.redirect_url,
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
     )
