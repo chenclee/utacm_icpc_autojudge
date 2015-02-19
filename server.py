@@ -38,7 +38,7 @@ class BaseHandler(web.RequestHandler):
 
     def get_current_user_id(self):
         cookie = self.get_current_user()
-        return (cookie['email'], cookie['name'])
+        return (cookie['email'], cookie['name']) if cookie else 'n/a'
 
     def is_admin(self):
         return self.get_current_user_id()[0] in options.admin_whitelist
@@ -287,11 +287,10 @@ class AdminHandler(BaseHandler):
     def post(self, put_type):
         if not self.is_admin():
             raise web.HTTPError(404)
-
         if put_type == 'rejudge':
             self.rejudge()
         elif put_type == 'clear':
-            self.clear()
+            self.clear_cache()
         elif put_type == 'frozen':
             self.change_state()
         elif put_type == 'whitelist':
@@ -314,7 +313,7 @@ class AdminHandler(BaseHandler):
         judge.rejudge_problem(prob_id)
         self.write(json.dumps(True))
 
-    def clear(self):
+    def clear_cache(self):
         problem_contents = {prob_id: get_problem_content(prob_id)
                             for prob_id in contest_cfg['prob_ids']}
 
