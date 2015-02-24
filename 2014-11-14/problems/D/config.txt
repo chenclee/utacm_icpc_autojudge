@@ -1,6 +1,0 @@
-{
-  'time_allowed': 180,
-  'max_attempts': 3,
-  'inputs': ['input1.txt', 'input2.txt', 'input3.txt'],
-  'outputs': ['output1.txt', 'output2.txt', 'output3.txt'],
-}
