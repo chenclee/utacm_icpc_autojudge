@@ -7,7 +7,7 @@ import sqlite3 as lite
 
 class Judge:
 
-    def __init__(self, contest, prob_ids, contest_dir, database):
+    def __init__(self, contest, prob_ids, contest_dir, database, contest_name):
         """Read in config files for problem set
 
         contest - pointer to contest state obj
@@ -21,16 +21,25 @@ class Judge:
             contest_dir - path to contest files directory
         """
         self.contest = contest
-        self.permits = {}
         self.contest_dir = contest_dir
+        self.contest_name = contest_name
         self.prob_cfgs = (
             {prob_id: self.load_cfg(prob_id) for prob_id in prob_ids})
         self.submitted_runs = {}
-	self.persons = {}
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS names(uuid INTEGER UNIQUE, name TEXT, email TEXT)")
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS attempts(uuid INTEGER, problem TEXT, attempt INTEGER, input_file TEXT, output_file TEXT, expiration REAL, time REAL, storage_file TEXT, correct INTEGER, UNIQUE(uuid, problem, attempt))")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS names(uuid INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS %s (uuid INTEGER, problem TEXT, attempt INTEGER, input_file TEXT, output_file TEXT, expiration REAL, time REAL, storage_file TEXT, correct INTEGER, UNIQUE(uuid, problem, attempt))" % contest_name)
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS emails on names(email)")
+
+    def get_uuid(self, user_id):
+        self.cursor.execute("SELECT * FROM names WHERE email=?", (str(user_id[0]),))
+        return self.cursor.fetchone()[0]
+
+    def get_max_attempt(self, uuid, prob_id):
+        self.cursor.execute("SELECT attempt FROM %s WHERE uuid=? AND problem=? ORDER BY attempt DESC" % self.contest_name, (uuid, prob_id))
+        r = self.cursor.fetchone()
+        return r[0] if r else -1
 
     def load_cfg(self, prob_id):
         """Read configuration file for a problem statement
@@ -54,46 +63,44 @@ class Judge:
         Return - returns {'is_new', 'ttl'} or None if the max number
                  of permits for the user and problem has been reached.
         """
-        if user_id not in self.permits:
-            self.permits[user_id] = {prob_id: [] for prob_id in self.prob_cfgs}
-	    self.persons[user_id] = len(self.permits)-1
-            self.cursor.execute("INSERT INTO names(uuid, name, email) VALUES (?, ?, ?)", (len(self.permits)-1, user_id[0], user_id[1]))
+        self.cursor.execute("SELECT count(*) FROM names WHERE email=? GROUP BY uuid", (str(user_id[0]),))
+        if self.cursor.fetchone() == None:
+            self.cursor.execute("INSERT INTO names(uuid, name, email) VALUES (NULL, ?, ?)", (user_id[1], user_id[0]))
 
         now = time.time()
-        if len(self.permits[user_id][prob_id]) > 0:
-            last_permit = self.permits[user_id][prob_id][-1]
+        uuid = self.get_uuid(user_id)
+        attempt = self.get_max_attempt(uuid, prob_id)
+        count = attempt + 1
+        self.cursor.execute("SELECT correct, expiration from %s WHERE uuid=? AND problem=? AND attempt=?" % self.contest_name, (uuid, prob_id, attempt))
+        r = self.cursor.fetchone()
+        if attempt > -1:
 
-            if last_permit['correct']:
+            if r[0]:
                 return "solved"
 
-            ttl = last_permit['expiration'] - now
-            if ttl > 0 and last_permit['correct'] is None:
+            ttl = r[1] - now
+            if ttl > 0 and r[0] is None:
                 return {'is_new': False, 'ttl': int(ttl)}
 
-        if (len(self.permits[user_id][prob_id])
-                == self.prob_cfgs[prob_id]['max_attempts']):
+        if (attempt == self.prob_cfgs[prob_id]['max_attempts'] - 1):
             return None
 
         if not create:
             return None
 
         # if another attempt is valid, generate uuid and store data
-        permit_num = len(self.permits[user_id][prob_id])
-        self.permits[user_id][prob_id].append({
-            'expiration': now + self.prob_cfgs[prob_id]['time_allowed'],
-            'input_file': self.prob_cfgs[prob_id]['inputs'][permit_num],
-            'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
-            'correct': None
-        })
-	self.cursor.execute("INSERT INTO attempts(uuid, problem, attempt, input_file, output_file, expiration) VALUES(?, ?, ?, ?, ?, ?)",
-	    (self.persons[user_id], prob_id, permit_num, self.prob_cfgs[prob_id]['inputs'][permit_num], self.prob_cfgs[prob_id]['outputs'][permit_num], self.permits[user_id][prob_id][-1]['expiration']))
+        permit_num = count
+	self.cursor.execute("INSERT INTO %s (uuid, problem, attempt, input_file, output_file, expiration) VALUES((SELECT uuid FROM names WHERE email=?), ?, ?, ?, ?, ?)" % self.contest_name,
+	    (user_id[0], prob_id, count, self.prob_cfgs[prob_id]['inputs'][count], self.prob_cfgs[prob_id]['outputs'][count], now + self.prob_cfgs[prob_id]['time_allowed']))
         return {'is_new': True, 'ttl': int(self.prob_cfgs[prob_id]['time_allowed'])}
 
     def get_solved_problems(self, user_id):
         solved = {}
         for prob_id in self.prob_cfgs:
             try:
-                solved[prob_id] = self.permits[user_id][prob_id][-1]['correct']
+                uuid = self.get_uuid(user_id)
+                self.cursor.execute("SELECT correct FROM %s WHERE uuid=? AND prob_id=? AND correct=1" % contest_name, (uuid, prob_id))
+                solved[prob_id] = self.cursor.fetchone() != None
             except:
                 solved[prob_id] = False
         return solved
@@ -102,7 +109,8 @@ class Judge:
         remaining_counts = {}
         for prob_id in self.prob_cfgs:
             try:
-                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts'] - len(self.permits[user_id][prob_id])
+                attempt = self.get_max_attempt(self.get_uuid(), prob_id)
+                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts'] - attempt - 1
             except:
                 remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts']
         return remaining_counts
@@ -124,11 +132,13 @@ class Judge:
         return - true if permit is valid and false otherwise
         """
         now = time.time()
-        if (user_id in self.permits
-                and prob_id in self.permits[user_id]
-                and len(self.permits[user_id][prob_id]) > 0):
-            return (now < self.permits[user_id][prob_id][-1]['expiration']
-                    and self.permits[user_id][prob_id][-1]['correct'] is None)
+        uuid = self.get_uuid(user_id)
+        self.cursor.execute("SELECT expiration, correct FROM %s WHERE uuid = ? AND problem = ?" % self.contest_name, (uuid, prob_id))
+        rows = self.cursor.fetchall()
+        if(rows != None):
+            for i in rows:
+                if now < i[0] and i[1] == None:
+                        return True
         return False
 
     def get_input_text(self, user_id, prob_id):
@@ -143,9 +153,12 @@ class Judge:
         if not self.valid_permit(user_id, prob_id):
             return None
 
+        uuid = self.get_uuid(user_id)
+        self.cursor.execute("SELECT input_file FROM %s WHERE uuid=? AND problem=? ORDER BY attempt DESC" % self.contest_name, (uuid, prob_id))
+        in_str = self.cursor.fetchone()[0]
         input_file = '%s/problems/%s/%s' % (
             self.contest_dir, prob_id,
-            self.permits[user_id][prob_id][-1]['input_file'])
+            in_str)
         with open(input_file, 'r') as in_file:
             return in_file.read()
 
@@ -160,34 +173,40 @@ class Judge:
 
         return - true if output was correct and false otherwise
         """
+        now = time.time()
+        uuid = self.get_uuid(user_id)
+        attempt = self.get_max_attempt(uuid, prob_id)
         if not self.valid_permit(user_id, prob_id):
             return None
         output = '\n'.join([line.strip('\n\r ') for line in output.splitlines()])
+        self.cursor.execute("SELECT output_file FROM %s WHERE uuid=? AND problem=? ORDER BY attempt DESC" % self.contest_name, (uuid, prob_id))
+        out_str = self.cursor.fetchone()[0]
         storage_string = '%s/submissions/%s/%s/%s' % (
             self.contest_dir, prob_id, user_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
+            out_str)
+        self.cursor.execute("SELECT output_file FROM %s WHERE uuid=? AND problem=? ORDER BY attempt DESC" % self.contest_name, (uuid, prob_id))
         source_string = '%s/submissions/%s/%s/%s.source' % (
             self.contest_dir, prob_id, user_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
+            out_str)
+        output_file = '%s/problems/%s/%s' % (
+            self.contest_dir, prob_id,
+            out_str)
+        self.cursor.execute("UPDATE %s SET time = ?, storage_file = ? WHERE uuid= ? AND problem = ? AND attempt = ?" % self.contest_name,
+	    ( now, storage_string, uuid, prob_id, attempt))
         if not os.path.exists(os.path.dirname(storage_string)):
             os.makedirs(os.path.dirname(storage_string))
         with open(source_string, 'w') as storage_file:
             storage_file.write(source)
         with open(storage_string, 'w') as storage_file:
             storage_file.write(output)
-        self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
-        now = time.time()
-        output_file = '%s/problems/%s/%s' % (
-            self.contest_dir, prob_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
+        self.cursor.execute("")
+        self.cursor.execute("SELECT output_file FROM %s WHERE uuid=? AND problem=? ORDER BY attempt DESC" % self.contest_name, (uuid, prob_id))
         with open(output_file, 'r') as out_file:
             out_file_string = '\n'.join([line.strip('\n\r ') for line in out_file.readlines()])
             result = out_file_string.strip() == output.strip()
-            self.permits[user_id][prob_id][-1]['correct'] = result
-            self.permits[user_id][prob_id][-1]['time'] = now
             self.contest.submit_result(user_id, prob_id, now, result)
-	    self.cursor.execute("UPDATE attempts SET correct = ?, time = ?, storage_file = ? WHERE uuid = ? AND problem = ? AND attempt = ?",
-		(result, now, storage_string, self.persons[user_id], prob_id, len(self.permits[user_id][prob_id])-1))
+	    self.cursor.execute("UPDATE %s SET correct = ?, time = ?, storage_file = ? WHERE uuid= ? AND problem = ? AND attempt = ?" % self.contest_name,
+		(result, now, storage_string, uuid, prob_id, attempt))
             return result
 
     def rejudge_problem(self, prob_id):
@@ -197,23 +216,28 @@ class Judge:
             prob_id - problem to check outputs for
             output - output to test against correct output
         """
+        print prob_id
+        self.cursor.execute("SELECT uuid, storage_file, output_file, time, attempt FROM %s WHERE problem=? ORDER BY uuid ASC, problem ASC, attempt ASC" % self.contest_name, (str(prob_id), ))
+        rows = self.cursor.fetchall()
         self.contest.nullify_prob(prob_id)
-        for user_id in self.permits:
-            for submission in self.permits[user_id][prob_id]:
-                if 'storage_file' in submission:
-                    storage_string = submission['storage_file']
-                    output_file = '%s/problems/%s/%s' % (
-                        self.contest_dir, prob_id,
-                        submission['output_file'])
-                    with open(output_file, 'r') as out_file:
-                        with open(storage_string, 'r') as storage_file:
-                            result = out_file.read().strip() == storage_file.read().strip()
-                            submission['correct'] = result
-                            self.contest.submit_result(user_id, prob_id,
-                                                       submission['time'], result)
+        for row in rows:
+            if(row[1] != None):
+                storage_string = row[1]
+                output_file = '%s/problems/%s/%s' % (
+                    self.contest_dir, prob_id,
+                    row[2])
+                with open(output_file, 'r') as out_file:
+                    with open(storage_string, 'r') as storage_file:
+                        result = out_file.read().strip() == storage_file.read().strip()
+                        self.cursor.execute("UPDATE %s SET correct=? WHERE uuid=? AND problem=? AND attempt=?" % self.contest_name,
+                                (result, row[0], prob_id, row[4]))
+                        self.cursor.execute("SELECT email, name FROM names WHERE uuid=?", (row[0],))
+                        user = self.cursor.fetchone()
+                        user_id = (user[0], user[1])
+                        self.contest.submit_result(user_id, prob_id,
+                                    row[3], result)
+
     def save_data(self):
         """Pickle permit data structure"""
-        with open(str(datetime.datetime.now()) + '.permits.data', 'w') as f:
-            pickle.dump(self.permits, f)
         self.connection.commit()
         self.connection.close()
