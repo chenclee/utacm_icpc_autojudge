@@ -3,22 +3,11 @@ utacm_icpc_autojudge
 
 Auto Judge for UTACM's Programming Contests
 
-TODO:
+docker-sandbox How-To:
+1) Install docker
+2) Download ubuntu:14.04 container
+3) Execute update_docker.sh
+4) Run server.py with sudo access
 
-Show clarifications below problems
-
-Notification of new clarifications
-
-Visual indicator of problem solved / number of attempts left / disable get permit when no permits left
-
-In browser growl-type notifs instead of popups for submitting solutions / submitting clarifications
-
-Scoreboard recovery / crash recovery / stable storage logging
-
-Finish Admin panel
-
-Load testing / functionality testing / dry run ACM officer contest
-
-Figure out Google AppEngine / ACM contest.utacm.org
-
-Colors + more styling
+Running Sample Contest:
+sudo python server.py --admin_whitelist='admin@example.com' --contest_dir='sample_contest' --delay=15 --port=8001 --client_id='YOUR_CLIENT_ID' --client_secret='YOUR_CLIENT_SECRET' --redirect_url='http://localhost:8001/auth/login'
