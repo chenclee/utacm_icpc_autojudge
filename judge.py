@@ -5,18 +5,22 @@ import pickle
 import datetime
 import threading
 import Queue
+import uuid
 
-from random import choice
+import subprocess32
+
+from contest import Contest
 
 class Judge:
-    lang_compile = {'GNU C++ 4': ['g++', '-static', '-fno-optimize-sibling-calls',
-                                  '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
-                                  '-s', '-x', 'c++', '-Wl', '--stack=268435456',
-                                  '-O2', '-o', 'prog_bin'],
-                    'GNU C++11 4': ['g++', '--std=c++11', '-O2', '-o', 'prog_bin'],
+    lang_compile = {'GNU C++ 4': ['g++', '-static', '-DONLINE_JUDGE',
+                                  '-lm', '-s', '-x', 'c++', '-O2',
+                                  '-o', 'prog_bin'],
+                    'GNU C++11 4': ['g++', '-static', '-DONLINE_JUDGE',
+                                    '-lm', '-s', '-x', 'c++', '-std=c++11', '-O2',
+                                    '-o', 'prog_bin'],
                     'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
                                 '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
-                                '-lm', '-s', '-Wl', '--stack=268435456', '-O2',
+                                '-lm', '-s', '-O2',
                                 '-o', 'prog_bin'],
                     'Java 6, 7': ['javac', '-cp', '".;*"']}
 
@@ -24,7 +28,8 @@ class Judge:
                 'GNU C++11 4': ['./prog_bin'],
                 'GNU C 4': ['./prog_bin'],
                 'Java 6, 7': ['java', '-Xmx512M', '-Xss64M', '-DONLINE_JUDGE=true'],
-                'Python 2.7': ['python']
+                'Python 2.7': ['python'],
+                'Python 3.4': ['python3']
     }
 
     def __init__(self, contest, problems, contest_dir, logger):
@@ -37,24 +42,95 @@ class Judge:
         self.subm_dir = os.path.join(contest_dir, 'submissions')
         self.log_path = os.path.join(self.subm_dir, 'log.txt')
 
-        self.judger = threading.Thread(target=self.judge_next)
+        self.judger = threading.Thread(target=self.judge_func)
         self.judging = True
         self.judger.start()
 
-    def judge_next(self):
+    def judge_func(self):
         while self.judging:
+            result = 'QU'
+            elapsed = 0.0
             try:
                 subm_id, log = self.queue.get(timeout=1)
                 self.logger.info("Judging submission %d: %s, %s" %
                         (subm_id, log['user_id'], log['prob_id']))
                 self.logger.debug("log: " + str(log))
 
-                result = choice(['CE', 'AC', 'WA', 'RE', 'TL', 'ML', 'OL'])
-                self.logger.info("Result: %s" % (result,))
-                self.contest.change_submission(subm_id, result)
-                self.queue.task_done()
+                if log['lang'] in Judge.lang_compile:
+                    compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
+                    docker_cmd = ['docker', 'run', '-v',
+                            '"%s":/judging_dir' % (os.path.abspath(log['path']),),
+                            '-w', '/judging_dir', 'chenclee/sandbox',
+                            '/bin/sh', '-c', "'%s'" % ' '.join(compile_cmd)]
+                    self.logger.debug("docker_cmd: " + ' '.join(docker_cmd))
+                    compiler = subprocess32.Popen(' '.join(docker_cmd), shell=True, stderr=subprocess32.PIPE)
+                    try:
+                        stderr_data = compiler.communicate(timeout=2)[1]
+                        if compiler.returncode != 0:
+                            result = 'CE'
+                            with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
+                                out_file.write(stderr_data)
+                            raise AssertionError()
+                    except subprocess32.TimeoutExpired:
+                        compiler.kill()
+                        compiler.communicate()
+                        result = 'CE'
+                        with open(os.path.join(log['path'], 'errors.txt'), 'w') as out_file:
+                            out_file.write("Compile Time Exceeded (2 seconds)\n")
+                        raise AssertionError()
+
+                prob = self.problems[log['prob_id']]
+                run_cmd = Judge.lang_run[log['lang']][:]
+                if 'Java' in log['lang']:
+                    run_cmd.append(log['source_name'][:-5])
+                elif 'Python' in log['lang']:
+                    run_cmd.append(log['source_name'])
+                docker_cmd = ['docker', 'run', '-i', '-m="%dm"' % (prob.mem_limit,),
+                        '-v', '"%s":/judging_dir' % (os.path.abspath(log['path']),),
+                        '-w', '/judging_dir', 'chenclee/sandbox',
+                        '/bin/sh', '-c', "'%s'" % ' '.join(run_cmd)]
+                self.logger.debug("docker_cmd: " + ' '.join(docker_cmd))
+                runner = subprocess32.Popen(' '.join(docker_cmd), shell=True,
+                        stdin=subprocess32.PIPE, stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
+                try:
+                    start_time = os.times()
+                    stdout_data, stderr_data = runner.communicate(
+                            input=prob.input_text(), timeout=prob.time_limit)
+                    end_time = os.times()
+                    elapsed = sum(end_time[2:4]) - sum(start_time[2:4])
+                    if runner.returncode != 0:
+                        result = 'RE'
+                        with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
+                            out_file.write(stderr_data)
+                        raise AssertionError()
+                    # TODO: check stdout to correct
+                    with open(os.path.join(log['path'], 'output.txt'), 'w') as out_file:
+                        out_file.write(stdout_data)
+                    actual = [line.strip() for line in stdout_data.splitlines() if line.strip() != '']
+                    expected = [line.strip() for line in prob.output_text().splitlines() if line.strip() != '']
+                    self.logger.debug("actual: " + str(actual[:10]))
+                    self.logger.debug("expected: " + str(expected[:10]))
+                    if actual == expected:
+                        result = 'AC'
+                    else:
+                        result = 'WA'
+                except subprocess32.TimeoutExpired:
+                    runner.kill()
+                    runner.communicate()
+                    elapsed = self.problems[log['prob_id']].time_limit
+                    result = 'TL'
+                    raise AssertionError()
             except Queue.Empty:
+                continue
+            except AssertionError:
                 pass
+            except Exception as e:
+                self.logger.error("Unable to judge: " + e.message)
+                result = 'JE'
+            # result = choice(['CE', 'AC', 'WA', 'RE', 'TL', 'ML'])
+            self.logger.info("Result: %s" % (Contest.verdicts[result],))
+            self.contest.change_submission(subm_id, result=result, run_time=elapsed)
+            self.queue.task_done()
         self.logger.info("Judging has been halted")
 
     def halt_judging(self):
@@ -64,11 +140,12 @@ class Judge:
         """Adds submission to judging queue.
 
         Submission is added as: (subm_id, 
-                                 {"submit_time"  : ...,
-                                  "user_id"    : ...,
-                                  "prob_id"    : ...,
-                                  "lang"       : ...,
-                                  "source_path": ...})
+                                 {"submit_time": ...,
+                                  "user_id": ...,
+                                  "prob_id": ...,
+                                  "lang": ...,
+                                  "path": ...,
+                                  "source_name": ...})
 
         Parameters:
             user_id - user who is submitting output
@@ -88,7 +165,8 @@ class Judge:
             return False
         submit_time = (int(time.time()) - self.contest.start_time) / 60
         subm_id = self.contest.add_submission(user_id, prob_id, lang, submit_time)
-        source_path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id), source_name)
+        path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id))
+        source_path = os.path.join(path, source_name)
         if not os.path.exists(os.path.dirname(source_path)):
             os.makedirs(os.path.dirname(source_path))
         with open(source_path, 'w') as out_file:
@@ -98,7 +176,8 @@ class Judge:
                    "user_id": user_id,
                    "prob_id": prob_id,
                    "lang": lang,
-                   "source_path": source_path}
+                   "path": path,
+                   "source_name": source_name}
             out_file.write("%s\n" % (log.__repr__(),))
         self.queue.put((subm_id, log))
         return True

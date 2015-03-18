@@ -13,7 +13,7 @@ class Contest:
                 'RE': 'Runtime Error',
                 'TL': 'Time Limit Exceeded',
                 'ML': 'Memory Limit Exceeded',
-                'OL': 'Output Limit Exceeded'}
+                'JE': 'Judging System Error'}
 
     def __init__(self, delay, duration, prob_ids, penalty, logger):
         """Initializes the contest.
@@ -127,13 +127,13 @@ class Contest:
             submit_time - minute into contest of submission
             result - 'QU': In Queue
                      'CE': Compile Error
+                     'JE': Judge System Error
 
                      'AC': Accepted
                      'WA': Wrong Answer
                      'RE': Runtime Error
                      'TL': Time Limit Exceeded
                      'ML': Memory Limit Exceeded
-                     'OL': Output Limit Exceeded
         """
         subm_id = self.next_subm_id
         self.next_subm_id += 1
@@ -145,11 +145,11 @@ class Contest:
                                      'run_time': 0.0,
                                      'result': result}
         self.logger.debug("submission: " + str(self.submissions[subm_id]))
-        if result not in ('QU', 'CE'):
+        if result not in ('QU', 'CE', 'JE'):
             self.update_scoreboard()
         return subm_id
 
-    def change_submission(self, subm_id, result):
+    def change_submission(self, subm_id, result, run_time=0.0):
         """Changes the result of a submission.
 
         Parameters:
@@ -157,6 +157,7 @@ class Contest:
             result - see #add_submission(...) for valid results
         """
         self.submissions[subm_id]['result'] = result
+        self.submissions[subm_id]['run_time'] = run_time
         self.update_scoreboard()
 
     def update_scoreboard(self):
@@ -172,14 +173,15 @@ class Contest:
                              'solved': {pid: [-1, 0] for pid in self.prob_ids},
                              'accum': {pid: 0 for pid in self.prob_ids}}
             if points[u]['accum'][s['prob_id']] >= 0:
-                points[u]['solved'][s['prob_id']][1] += 1
                 if s['result'] == 'AC':
+                    points[u]['solved'][s['prob_id']][1] += 1
                     points[u]['solved'][s['prob_id']][0] = s['submit_time']
                     points[u]['num_solved'] += 1
                     points[u]['penalty'] += points[u]['accum'][s['prob_id']]
                     points[u]['penalty'] += s['submit_time']
                     points[u]['accum'][s['prob_id']] = -1
-                elif s['result'] not in ('QU', 'CE'):
+                elif s['result'] not in ('QU', 'CE', 'JE'):
+                    points[u]['solved'][s['prob_id']][1] += 1
                     points[u]['accum'][s['prob_id']] += self.penalty
 
         # Make solved negative to sort by highest score, and fix negative after.

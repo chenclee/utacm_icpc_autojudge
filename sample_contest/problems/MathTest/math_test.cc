@@ -40,6 +40,6 @@ int main()
 
 		float x = 100.0f * correct / n;
 
-		cout << round(x) << "%%" << endl;
+		cout << round(x) << "%" << endl;
 	}
 }
