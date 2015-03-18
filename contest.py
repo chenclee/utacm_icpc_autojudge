@@ -191,7 +191,6 @@ class Contest:
                                    points[user_id]['solved'])
                                    for user_id in points])
         self.scoreboard = [(c, -a, b, d) for a, b, c, d in self.scoreboard]
-        self.logger.debug("scoreboard: " + str(self.scoreboard))
 
     def reset_scoreboard(self):
         """Clears the entire scoreboard.

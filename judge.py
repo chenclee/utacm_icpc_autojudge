@@ -80,29 +80,38 @@ class Judge:
                         raise AssertionError()
 
                 prob = self.problems[log['prob_id']]
-                run_cmd = Judge.lang_run[log['lang']][:]
+                run_cmd = ['time', '--portability'] + Judge.lang_run[log['lang']]
                 if 'Java' in log['lang']:
                     run_cmd.append(log['source_name'][:-5])
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
-                docker_cmd = ['docker', 'run', '-i', '-m="%dm"' % (prob.mem_limit,),
+                docker_cmd = ['docker', 'run', '-i',
+                        '-m="%dm"' % (prob.mem_limit,),
                         '-v', '"%s":/judging_dir' % (os.path.abspath(log['path']),),
                         '-w', '/judging_dir', 'chenclee/sandbox',
                         '/bin/sh', '-c', "'%s'" % ' '.join(run_cmd)]
                 self.logger.debug("docker_cmd: " + ' '.join(docker_cmd))
                 runner = subprocess32.Popen(' '.join(docker_cmd), shell=True,
                         stdin=subprocess32.PIPE, stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
+                finished = False
                 try:
-                    start_time = os.times()
                     stdout_data, stderr_data = runner.communicate(
-                            input=prob.input_text(), timeout=prob.time_limit)
-                    end_time = os.times()
-                    elapsed = sum(end_time[2:4]) - sum(start_time[2:4])
+                            input=prob.input_text(), timeout=(prob.time_limit * 4))
+                    regex = re.compile("(\d+\.\d{2})")
+                    self.logger.debug(stderr_data.splitlines()[-2:])
                     if runner.returncode != 0:
-                        result = 'RE'
+                        result = 'RE' if stderr_data.splitlines()[0].strip() != 'Command terminated by signal 9' else 'ML'
                         with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
                             out_file.write(stderr_data)
                         raise AssertionError()
+                    time_matches = [regex.search(s) for s in stderr_data.splitlines()[-2:]]
+                    elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
+                    if elapsed > prob.time_limit:
+                        finished = True
+                        raise subprocess32.TimeoutExpired(
+                                cmd=' '.join(docker_cmd),
+                                timeout=prob.time_limit,
+                                output=None)
                     # TODO: check stdout to correct
                     with open(os.path.join(log['path'], 'output.txt'), 'w') as out_file:
                         out_file.write(stdout_data)
@@ -115,8 +124,9 @@ class Judge:
                     else:
                         result = 'WA'
                 except subprocess32.TimeoutExpired:
-                    runner.kill()
-                    runner.communicate()
+                    if not finished:
+                        runner.kill()
+                        runner.communicate()
                     elapsed = self.problems[log['prob_id']].time_limit
                     result = 'TL'
                     raise AssertionError()
