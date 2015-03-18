@@ -1,0 +1,27 @@
+<div class="container">
+<div class="panel panel-default">
+    <div class="panel-heading">Submissions</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Problem</th>
+                <th>Verdict</th>
+                <th>Language</th>
+                <th>Run Time</th>
+                <th>Submission Time</th>
+            </tr>
+        </thead>
+        <tbody class="table-hover">
+            <tr ng-repeat="entry in submissions">
+                <td>{{entry['subm_id']}}</td>
+                <td>{{entry['prob_id']}}</td>
+                <td>{{verdicts[entry['result']]}}</td>
+                <td>{{entry['lang']}}</td>
+                <td>{{entry['run_time'] | number:3}}</td>
+                <td>{{entry['submit_time'] | number:0}} minute(s) in</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>

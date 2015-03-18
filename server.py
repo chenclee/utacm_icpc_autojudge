@@ -5,9 +5,10 @@ import uuid
 import signal
 import sys
 
-from tornado import ioloop, web, auth, httpserver, gen, escape
+from tornado import ioloop, web, auth, httpserver, gen, escape, log
 from tornado.options import options, parse_command_line, define
 
+from problem import Problem
 from contest import Contest
 from judge import Judge
 from data_uri import DataURI
@@ -31,26 +32,23 @@ define('delay', default=15*60,
 
 class BaseHandler(web.RequestHandler):
     def get_current_user(self):
-        user_json = self.get_secure_cookie('utacm_contest_user')
-        if not user_json:
-            return None
-        return escape.json_decode(user_json)
+        user_json = self.get_secure_cookie('utacm_contest_user', max_age_days=1)
+        return escape.json_decode(user_json) if user_json else None
 
-    def get_current_user_id(self):
-        cookie = self.get_current_user()
-        return (cookie['email'], cookie['name']) if cookie else 'n/a'
+    def current_user_id(self):
+        cookie = self.current_user
+        return (cookie['email'], cookie['name'])
+
+    def current_user_pretty(self):
+        return "%s (%s)" % self.current_user_id()
 
     def is_admin(self):
-        return self.get_current_user_id()[0] in options.admin_whitelist
+        return self.current_user_id()[0] in options.admin_whitelist
 
 
 class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
     @gen.coroutine
     def get(self):
-        if self.get_current_user():
-            self.redirect('/')
-            return
-
         if self.get_argument('code', False):
             user = yield self.get_authenticated_user(
                 redirect_uri=self.settings['google_redirect_url'],
@@ -68,8 +66,8 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
                 raise web.HTTPError(500, 'Google authentication failed')
 
             user = json.loads(response.body)
-            self.set_secure_cookie('utacm_contest_user', escape.json_encode(user))
-            logging.info(self.get_current_user_id() + " just logged in.")
+            self.set_secure_cookie('utacm_contest_user', escape.json_encode(user), expires_days=1)
+            logger.info("%s (%s) signed in" % (user["name"], user["email"]))
             self.redirect('/')
             return
         elif self.get_secure_cookie('utacm_contest_user'):
@@ -86,10 +84,6 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):
-        try:
-            logging.info(self.get_current_user_id() + " just logged out.")
-        except:
-            pass
         self.clear_cookie('utacm_contest_user')
         self.write("You are now logged out.")
 
@@ -97,13 +91,6 @@ class AuthLogoutHandler(BaseHandler):
 class IndexHandler(BaseHandler):
     @web.authenticated
     def get(self):
-        # Serve page
-        # Make sure to send pre-contest page if pre-contest
-        # should be asynchronous
-        try:
-            logging.info(self.get_current_user_id() + " requested the webpage.")
-        except:
-            pass
         if contest.is_running() or contest.is_over():
             self.render('contest.html', admin=self.is_admin())
         else:
@@ -116,11 +103,12 @@ class MetadataHandler(BaseHandler):
         if not contest.is_running() and not contest.is_over():
             raise web.HTTPError(503)
         data = {
+            'langs': Judge.lang_run.keys(),
             'prob_ids': contest_cfg['prob_ids'],
-            'prob_contents': problem_contents,
-            'remaining_permit_counts': judge.get_remaining_permit_counts(self.get_current_user_id()),
-            'solved': judge.get_solved_problems(self.get_current_user_id()),
-            'problems_time_to_solve': judge.get_problems_time_to_solve()
+            'prob_contents': {prob_id: problems[prob_id].content
+                              for prob_id in contest_cfg['prob_ids']},
+            'verdicts': Contest.verdicts,
+            'solved': contest.get_submissions(self.current_user_id())
         }
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
@@ -129,81 +117,14 @@ class MetadataHandler(BaseHandler):
 class UpdatesHandler(BaseHandler):
     @web.authenticated
     def get(self):
-        # Send updates in json form
-        # Updates being: remaining time, scoreboard, clarifications
-        updates = {
-            'remaining_time': contest.remaining_time(),
-        }
+        updates = {'remaining_time': contest.remaining_time()}
         if contest.is_running() or contest.is_over():
-            updates['scoreboard'] = contest.get_scoreboard()
-            updates['clarifications'] = contest.get_clarifs(self.get_current_user_id())
-
+            updates['scoreboard'] = contest.get_scoreboard(live=self.is_admin())
+            updates['solved'] = contest.get_solved(self.current_user_id())
+            updates['submissions'] = contest.get_submissions(self.current_user_id())
+            updates['clarifications'] = contest.get_clarifs(self.current_user_id())
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(updates))
-
-
-class PermitsHandler(BaseHandler):
-    @web.authenticated
-    def post(self):
-        # Requests a new permit. Body should be just the prob_id
-        # Return ttl of permit if max permits have been issued
-        # Raises a 403 error if out of permits
-        # should be asynchronous
-        if not contest.is_running():
-            raise web.HTTPError(503)
-        user_id = self.get_current_user_id()
-        prob_id = self.get_argument('content')
-        create = json.loads(self.get_argument('create'))
-
-        try:
-            logging.info("%s requested a %spermit for prob %s" % (user_id, "new " if create else "", prob_id))
-        except:
-            pass
-
-        if prob_id not in contest_cfg['prob_ids']:
-            raise web.HTTPError(400)
-        permit = judge.get_expiring_permit(user_id, prob_id, create)
-        if permit is None and create:
-            try:
-                logging.info("%s's permit request rejected. Max requested already." % (user_id,))
-            except:
-                pass
-            raise web.HTTPError(403)
-        elif permit is None and not create:
-            try:
-                logging.info("%s requested permit history. No permits issued." % (user_id,))
-            except:
-                pass
-            permit = None
-        else:
-            try:
-                if create:
-                    logging.info("%s issued permit %s." % (user_id, permit))
-                else:
-                    logging.info("%s was previously issued permit %s." % (user_id, permit))
-            except:
-                pass
-
-        self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(permit))
-
-
-class InputFilesHandler(BaseHandler):
-    @web.authenticated
-    def get(self, prob_id):
-        # Sends the input file for the specified problem
-        # verify valid prob_id
-        # Check permit, return error if expired
-        if not contest.is_running():
-            raise web.HTTPError(503)
-        if prob_id not in contest_cfg['prob_ids']:
-            raise web.HTTPError(404)
-        user_id = self.get_current_user_id()
-        text = judge.get_input_text(user_id, prob_id)
-        if text is None:
-            raise web.HTTPError(409)
-        self.set_header('Content-Type', 'application/octet-stream')
-        self.write(text)
 
 
 class SubmitSolutionHandler(BaseHandler):
@@ -218,18 +139,21 @@ class SubmitSolutionHandler(BaseHandler):
             raise web.HTTPError(503)
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(404)
-        user_id = self.get_current_user_id()
+
+        user_id = self.current_user_id()
+
         try:
-            output = DataURI(self.get_argument('outputFile')).data
+            lang = self.get_argument('lang')[:32]
+            filename = self.get_argument('filename')[:32]
+            source = DataURI(self.get_argument('sourceFile')).data
         except:
             raise web.HTTPError(400)
-        try:
-            source_code = DataURI(self.get_argument('sourceFile')).data
-        except:
-            raise web.HTTPError(400)
-        result = judge.judge_submission(user_id, prob_id, source_code, output)
-        if result is None:
-            raise web.HTTPError(409)
+
+        logger.info('%s requests judgement for a submission (%s, %s, %s)' %
+                (self.current_user_pretty(), filename, lang, prob_id))
+        result = judge.enqueue_submission(user_id, prob_id, lang, filename, source)
+        logger.info('Submission successfully added to judge queue' if result else
+                'Failed to add to judge queue')
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(result))
 
@@ -237,17 +161,17 @@ class SubmitSolutionHandler(BaseHandler):
 class SubmitClarificationHandler(BaseHandler):
     @web.authenticated
     def post(self, prob_id):
-        # Requests a solution be graded
-        # Body should contain: source code, output
-        # Verify valid prob_id
-        # Check permit, return error if expired
-        # Dispatch to judge, return True or False based on accepted or not
         if not contest.is_running():
             raise web.HTTPError(503)
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(404)
-        user_id = self.get_current_user_id()
+        user_id = self.current_user_id()
         message = self.get_argument('content')
+
+        logger.info('%s requests clarification for problem %s' %
+                (self.current_user_pretty(), prob_id))
+        logger.debug('Clarification: ' + message)
+
         contest.submit_clarif(user_id, prob_id, message)
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(True))
@@ -258,17 +182,12 @@ class LogHandler(BaseHandler):
     def get(self, value):
         if not self.is_admin():
             raise web.HTTPError(404)
-        elif value != 'permits':
-            raise web.HTTPError(400)
-
+        # TODO: send all logs
         self.set_header('Content-Type', 'application/json')
-        if value == 'permits':
-            self.write(json.dumps(judge.save_data()))
-
+        self.write(json.dumps(True))
 
 
 class AdminHandler(BaseHandler):
-    
     @web.authenticated
     def get(self, value):
         if not self.is_admin():
@@ -305,17 +224,11 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
 
     def rejudge(self):
-        prob_id = -1
-        try:
-            prob_id = self.get_argument('probId')
-        except Exception:
-            raise web.HTTPError(400)
-        judge.rejudge_problem(prob_id)
+        judge.rejudge_all()
         self.write(json.dumps(True))
 
     def clear_cache(self):
-        problem_contents = {prob_id: get_problem_content(prob_id)
-                            for prob_id in contest_cfg['prob_ids']}
+        (prob.clear() for prob in problems.values())
 
     def change_state(self):
         new_state = ''
@@ -387,28 +300,43 @@ class AdminHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
-def get_problem_content(prob_id):
-    content_path = os.path.join(options.contest_dir,
-                                'problems',
-                                prob_id,
-                                'content.html')
-    with open(content_path, 'r') as in_file:
-        return in_file.read()
+def init_loggers():
+    access_log_path = os.path.join(options.contest_dir, "access_log.txt")
+    handler_access = logging.FileHandler(access_log_path)
+    handler_access.setFormatter(log.LogFormatter())
+    logging.getLogger('tornado.access').addHandler(handler_access)
+
+    server_log_path = os.path.join(options.contest_dir, "server_log.txt")
+    handler_server = logging.FileHandler(server_log_path)
+    handler_server.setFormatter(log.LogFormatter())
+    logger.addHandler(handler_server)
+    logger.setLevel(logging.DEBUG)
+
+    logger.info("Starting up server")
 
 
 if __name__ == '__main__':
     parse_command_line()
+    logger = logging.getLogger(__name__)
+    init_loggers()
 
-    contest_cfg_path = os.path.join(options.contest_dir, 'config.txt')
-    with open(contest_cfg_path, 'r') as in_file:
+    logger.info("Loading contest configuration")
+    with open(os.path.join(options.contest_dir, 'config.txt'), 'r') as in_file:
         contest_cfg = eval(in_file.read())
+        
+        seconds = contest_cfg['duration'] % 60
+        minutes = contest_cfg['duration'] / 60 % 60
+        hours = contest_cfg['duration'] / 60 / 60 % 60
 
-    problem_contents = {prob_id: get_problem_content(prob_id)
+        logger.debug("Duration: %02d:%02d:%02d" % (hours, minutes, seconds))
+        logger.debug("Problems: " + str(contest_cfg['prob_ids']))
+        logger.debug("Penalty: %d points / wrong submission" % contest_cfg['penalty'])
+
+    problems = {prob_id: Problem(prob_id, options.contest_dir, logger)
                         for prob_id in contest_cfg['prob_ids']}
-
     contest = Contest(options.delay, contest_cfg['duration'],
-                      contest_cfg['prob_ids'], contest_cfg['penalty'])
-    judge = Judge(contest, contest_cfg['prob_ids'], options.contest_dir)
+                      contest_cfg['prob_ids'], contest_cfg['penalty'], logger)
+    judge = Judge(contest, problems, options.contest_dir, logger)
 
     application = web.Application(
         [
@@ -420,8 +348,6 @@ if __name__ == '__main__':
             (r'/api/v1/log/(.*)', LogHandler),
             (r'/api/v1/metadata', MetadataHandler),
             (r'/api/v1/updates', UpdatesHandler),
-            (r'/api/v1/permits', PermitsHandler),
-            (r'/api/v1/files/(.*)/input.txt', InputFilesHandler),
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
         ],
@@ -430,7 +356,7 @@ if __name__ == '__main__':
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
         xsrf_cookies=True,
-        debug=False,
+        debug=True,
         google_redirect_url=options.redirect_url,
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
     )
@@ -439,11 +365,13 @@ if __name__ == '__main__':
         port=options.port,
         max_buffer_size=128*1024,
     )
-    
-    def save_data(a, b):
-        judge.save_data()
-        sys.exit(1)
-    
-    signal.signal(signal.SIGINT, save_data)
-    
-    ioloop.IOLoop.instance().start()
+
+    logger.info("Setup complete, starting IOLoop")
+    try:
+        ioloop.IOLoop.instance().start()
+    except KeyboardInterrupt:
+        logger.info("Server halted by ^C, shutting down judger")
+    except Exception as e:
+        logger.critical("Server crashed: %s" % e.message)
+    finally:
+        judge.halt_judging()

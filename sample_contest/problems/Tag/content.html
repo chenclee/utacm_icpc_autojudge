@@ -1,0 +1,125 @@
+<h1 class="page-header">Tag</h1>
+
+<p>Everyone loves playing tag at recess. The teachers love it when you play tag, because it's all so much fun and definitely not because the classroom returns to moderately sane levels for a grand total of 15 minutes after recess.</p>
+<p>Anyway.. You are definitely not the average elementary school student, and rather than play tag, you decide it is more fun to simulate it. That way you can play way more games of tag, without any of the running! Fantastic!</p>
+<p>To simulate tag, you decide to model the playground as a grid. A period ('.') marks a passable square, and a pound sign ('#') marks an impassable square, whether it be a bench, part of the playscape, or the kid that sits in the same spot eating dirt all recess.</p>
+<p>In the grid, there will also be up to 10 players, marked in the grid as the digits 0-9. To simulate tag, you will run a "step" for each second. In a given step, the players will take a single turn, in increasing numerical order.</p>
+<p>Player 0 is always 'it'. In each turn, player 0 will always go after the closest (manhattan distance, not shortest path) player in the grid. If there are multiple players that are the same distance away, player 0 will go after the player with the lower number.</p>
+<p>When player 0 is going after another player, he either moves in the row direction or the column direction. If the difference in columns is greater than the difference in rows, player 0's first priority is moving one cell towards his target along the row, otherwise his first priority is moving one cell towards his target along the column. If his first priority is blocked, he tries moving towards his target in the other dimension, unless the difference in the other dimension is 0, in which case he does not move. If both are blocked, he does not move. If player 0 lands on another player, they have been tagged, and are removed from play.</p>
+<p>Each of the other players has a current direction they are moving in. An initial direction will be given for each of them. Each step, the player looks at the cell in front of them. If it is off of the playing field, or is impassable, they will turn 90 degrees to the right instead of moving, otherwise they will advance a single cell in that direction. </p>
+<p>No two players will be in the same cell at the start, but it is possible for multiple non-0 players to occupy a cell at the same time. If player 0 steps into a cell with multiple players, they are all out.</p>
+<br/>
+<p>For the simulation results, print out the number of steps it takes before the only player left is 0. Since recess is only 30 minutes, there are only 30*60 steps possible. If the game has not finished before this time, print "DRAW" instead.</p>
+
+<h4>Input</h4>
+
+<p>The first line of input will contain a single integer T, the number of test cases.<br/>
+The first line of each test case will contain three integers N, M, and P. N is the number of rows in the playing field grid, and M is the number of columns. P is the number of players.<br/>
+The next line contains P-1 integers, which describe the starting direction of each non-0 player. 0 means going along a row in the positive direction, 1 means going along a column in the positive direction, 2 means going along a row in the negative direction, and 3 means going along a column in the negative direction. In other words, if you lay the grid out with the 0th row on top and the N-1th row on bottom, 0 is right, 1 is down, 2 is left, 3 is up.<br/>
+The next N lines each contain M characters, describing a row of the grid. Each cell is either a period, pound sign, or digit.<br/>
+</p>
+
+<h4>Constraints</h4>
+
+<p>
+1 &le; T &le; 10<br/>
+1 &le; N, M &le; 100<br/>
+1 &le; P &le; 10<br/>
+</p>
+
+<h4>Output</h4>
+
+<p>
+For each test case, print the number of steps that are run before the game is over, or if it does not end in 1800 steps, print DRAW
+</p>
+
+<h4>Sample Input</h4>
+
+<pre>
+3
+2 2 2
+3
+..
+01
+1 3 2
+2
+0#1
+5 5 3
+3 0 
+...2.
+.....
+#.0..
+....#
+1....
+</pre>
+
+<h4>Sample Output</h4>
+
+<pre>
+1
+DRAW
+7
+</pre>
+
+
+<h4>Explanation of Sample Data</h4>
+<p>In the first case, 0 moves first, so even though 1 is going to move, 0 gets him out before he gets to move.</p>
+<p>In the second case, there is no way for 0 to get to 1, so he cannot get him before the end of recess.</p>
+<p>In the third case, the steps are as follows:</p>
+<pre>
+Step 0:
+...2.
+.....
+#.0..
+....#
+1....
+
+Step 1: p2 is closer to p0 than p1, so p0 moves up. p1 moves up, p2 moves right.
+....2
+..0..
+#....
+1...#
+.....
+
+Step 2: p2 is still closer to p0 than p1, so p0 goes after p2 moving right, p2 turns right, and p1 turns right.
+....2
+...0.
+#....
+1...#
+.....
+
+Step 3: p2 is equidistant in row and column from p0, so p0 defaults to moving along the column, moving up. p2 moves down, p1 moves right. 
+...0.
+....2
+#....
+.1..#
+.....
+
+Step 4: p2 is equidistant in row and column from p0, so p0 defaults to moving along the column, moving down. p2 moves down, p1 moves right.
+.....
+...0.
+#...2
+..1.#
+.....
+
+Step 5: p2 is equidistant in row and column from p0, so p0 defaults to moving along the column, moving down. p2 turns right, p1 moves right.
+.....
+.....
+#..02
+...1#
+.....
+
+Step 6: p0 is equidistant from p1 and p2, so it picks the one with the lower number (p1) to go after. Thus, it moves down, tagging p1. p1 doesn't get to go since he is out, and p2 moves left.
+.....
+.....
+#..2.
+...0#
+.....
+
+Step 7: p0 moves up to tag p2, game is over.
+.....
+.....
+#..0.
+....#
+.....
+</pre>

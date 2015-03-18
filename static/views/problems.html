@@ -6,34 +6,22 @@
             <span class="badge" style="float: right;" ng-show="TODO">0</span>
             <div class="clearfix"></div>
         </accordion-heading>
-        <div ng-show="!showSubmit[$index]">
-            <p class="text-center">Remaining Attempts: {{ remainingPermits[probId] }}</p>
-            <p class="text-center">Time to Solve: {{ problemsTimeToSolve[probId] }}</p>
-            <button ng-show="!solved[probId]" ng-disabled="remainingPermits[probId] == 0" class="btn btn-default btn-sm center-block" ng-click="getPermit($index, true)">Attempt to Solve</button>
-            <button disabled ng-show="solved[probId]" class="btn btn-default btn-sm center-block">Already Solved</button>
-        </div>
-        <div ng-show="showSubmit[$index]">
-            <div class="clearfix">
-                <label for="remainingTime" style="float: left;">Remaining time:</label>
-                <span id="remainingTime" style="float: right;">{{ttlText[$index]}}</span>
+        <form role="form" ng-submit="processSubmitForm($index)">
+            <div class="form-group">
+                <label for="submLang">Language</label>
+                <br>
+                <select id="submLang" ng-model="submLangs[$index]">
+                    <option ng-repeat="lang in langs">{{ lang }}</option>
+                </select>
             </div>
-            <div class="clearfix">
-                <label for="inputFile" style="float: left;">Input file:</label>
-                <a id="inputFile" href="/api/v1/files/{{probId}}/input.txt" style="float: right;">input.txt</a>
+            <div class="form-group center-block">
+                <label for="sourceFile">Source File</label>
+                <input type="file" id="sourceFile" fileread="files.source[$index]" required>
             </div>
-            <div class="voffset3"></div>
-            <form role="form" ng-submit="processSubmitForm($index)">
-                <div class="form-group">
-                    <label for="outputFile">Output File</label>
-                    <input type="file" id="outputFile" fileread="files.output[$index]" required>
-                </div>
-                <div class="form-group center-block">
-                    <label for="sourceFile">Source File</label>
-                    <input type="file" id="sourceFile" fileread="files.source[$index]" required>
-                </div>
-                <button type="submit" class="btn btn-default center-block">Submit</button>
-            </form>
-        </div>
+            <button type="submit" ng-show='!solved[probId] && rawTime > 0' class="btn btn-default center-block">Submit</button>
+            <button disabled ng-show='!solved[probId] && rawTime <= 0' class="btn btn-default center-block">Contest Over</button>
+            <button disabled ng-show="solved[probId]" class="btn btn-default center-block">Already Solved</button>
+        </form>
     </accordion-group>
 </accordion>
 </div>
@@ -60,7 +48,7 @@
                     <tbody>
                         <tr ng-repeat="clarif in clarifications | filter:{'prob_id': probId}">
                             <td>{{clarif.message}}</td>
-                            <td>{{clarif.response}}</td>
+                            <td ng-bind-html="clarif.response | unsafe"></td>
                         </tr>
                     </tbody>
                 </table>

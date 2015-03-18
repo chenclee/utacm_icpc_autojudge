@@ -1,13 +1,14 @@
 var preContestControllers = angular.module('preContestControllers', []);
 
-preContestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout',
+preContestControllers.controller('MainCtrl', ['$scope', '$http', '$timeout', '$window',
     function ($scope, $http, $timeout, $window) {
+      var first = true;
       function sync () {
         $http.get('api/v1/updates').success(function (data) {
-          if ($scope.rawTime < parseInt(data['remaining_time'])) {
-            $window.location.reload();
+          if (first || $scope.rawTime > data['remaining_time']) {
+            $scope.rawTime = data['remaining_time'];
+            first = false;
           }
-          $scope.rawTime = data['remaining_time'];
           $scope.remainingTime = moment($scope.rawTime);
           $timeout(sync, 5000);
           for (i = 1000; i <= 4000; i += 1000) {
@@ -37,17 +38,13 @@ var contestControllers = angular.module('contestControllers', []);
 var probIds = [];
 
 contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$rootScope',
-    function ($scope, $http, $interval, $rootScope, $window) {
+    function ($scope, $http, $interval, $rootScope) {
       $http.get('api/v1/metadata').success(function (data) {
         $scope.probIds = probIds = data['prob_ids'];
         $scope.probContents = data['prob_contents'];
-        $scope.remainingPermits = data['remaining_permit_counts'];
+        $scope.langs = data['langs'];
         $scope.solved = data['solved'];
-        $scope.problemsTimeToSolve = data['problems_time_to_solve'];
-
-        for (var i = 0; i < probIds.length; i++) {
-          $scope.problemsTimeToSolve[probIds[i]] = momentMinutes($scope.problemsTimeToSolve[probIds[i]]);
-        }
+        $scope.verdicts = data['verdicts'];
       });
 
       $rootScope.syncUpdates = function () {
@@ -56,9 +53,11 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
             $interval.cancel($rootScope.prevSync);
           $rootScope.rawTime = data['remaining_time'];
           $scope.scoreboard = data['scoreboard'];
+          $scope.solved = data['solved'];
+          $scope.submissions = data['submissions'];
           $scope.clarifications = data['clarifications'];
           $rootScope.remainingTime = moment($rootScope.rawTime);
-          $rootScope.prevSync = $interval($rootScope.clockTick, 1000, 29);
+          $rootScope.prevSync = $interval($rootScope.clockTick, 1000, 4);
         });
       }
 
@@ -70,7 +69,7 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
       }
 
       $rootScope.syncUpdates();
-      $interval($rootScope.syncUpdates, 30000);
+      $interval($rootScope.syncUpdates, 5000);
     }]);
 
 contestControllers.controller('HomeCtrl', ['$scope', '$http',
@@ -81,7 +80,7 @@ var whitelist = [];
 var allClarifications = [];
 var radioModel = 'Active';
 
-contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$cookies', '$window', '$modal', '$interval',
+contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$cookies', '$window', '$modal', '$interval', '$window',
     function ($scope, $rootScope, $http, $cookies, $window, $modal, $interval) {
       function sync () {
         $http.get('api/v1/admin/updates').success(function (data) {
@@ -279,29 +278,17 @@ contestControllers.controller('NewClarifModalCtrl', function ($scope, $modalInst
   };
 });
 
-contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies', '$interval',
-    function ($scope, $http, $rootScope, $window, $cookies, $interval) {
+contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '$window', '$cookies', '$interval', '$location',
+    function ($scope, $http, $rootScope, $window, $cookies, $interval, $location) {
       var tabClasses;
         
       $scope.files = {};
-      $scope.files.output = [];
+      $scope.submLangs = [];
       $scope.files.source = [];
       i = 0;
       for (probId in probIds) {
-        $scope.files.output.push("");
-        $scope.files.source.push("");
-      }
-      if (typeof $rootScope.showSubmit == 'undefined') {
-        $rootScope.showSubmit = [];
-        $rootScope.ttl = [];
-        $rootScope.ttlText = [];
-        $rootScope.tick = [];
-        for (probId in probIds) {
-          $rootScope.showSubmit.push(false);
-          $rootScope.ttl.push(-1);
-          $rootScope.ttlText.push("");
-          $rootScope.tick.push(null);
-        }
+        $scope.submLangs.push($scope.langs[0]);
+        $scope.files.source.push(["", ""]);
       }
 
       function initTabs() {
@@ -316,9 +303,6 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
       $scope.getTabClass = function (tabNum) {
         if ($scope.solved[probIds[tabNum - 1]]) {
             return tabClasses[tabNum] + " panel-success";
-        } else if ($scope.remainingPermits[probIds[tabNum - 1]] == 0
-                && !$rootScope.showSubmit[tabNum - 1]) {
-            return tabClasses[tabNum] + " panel-danger";
         } else if ($rootScope.activeTab == tabNum) {
             return tabClasses[tabNum] + " panel-primary";
         }
@@ -333,10 +317,14 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         tabClasses[tabNum] = "active";
         $rootScope.activeTab = tabNum;
         $scope.open[tabNum - 1] = true;
+        $location.search('id=' + tabNum);
       };
 
       if (typeof $rootScope.activeTab == 'undefined') {
-        $scope.setActiveTab(1);
+        if (!('id' in $location.search())) {
+          $location.search('id=1');
+        }
+        $scope.setActiveTab(parseInt($location.search()['id']));
       } else {
         $scope.setActiveTab($rootScope.activeTab);
       }
@@ -358,73 +346,18 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
               'message': $scope.clarif[index],
             });
             $scope.clarif[index] = null;
+          } else {
+            $window.alert("Failed to submit. Try again!");
           }
         });
       };
-
-      function tick (index) {
-        $rootScope.ttl[index] -= 1;
-        $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
-        if ($rootScope.ttl[index] <= 0) {
-          $rootScope.showSubmit[index] = false;
-          if ($rootScope.tick[index] != null) {
-            $interval.cancel($rootScope.tick[index]);
-            $rootScope.tick[index] = null;
-          }
-        }
-      }
-
-      $scope.getPermit = function (index, create) {
-        permitUrl = 'api/v1/permits';
-        permitData = { '_xsrf': $cookies._xsrf, 'content': probIds[index], 'create': create };
-        $http({
-          method  : 'POST',
-          url     : permitUrl,
-          data    : $.param(permitData),
-          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }).success(function (data) {
-          if (data == null && !create)
-            return;
-          if ($rootScope.tick[index] != null) {
-            $interval.cancel($rootScope.tick[index]);
-            $rootScope.tick[index] = null;
-          }
-          if (data === 'solved') {
-            $scope.solved[probIds[index]] = true;
-            return;
-          }
-          if (data.is_new)
-            $scope.remainingPermits[probIds[index]]--;
-          $rootScope.showSubmit[index] = true;
-          $rootScope.ttl[index] = data.ttl;
-          $rootScope.ttlText[index] = momentMinutes($rootScope.ttl[index]);
-          $rootScope.tick[index] = $interval(function () {
-            tick(index);
-          }, 1000, data.ttl);
-        }).error(function (data, status, headers, config) {
-          if (create && status == 403) {
-            $window.alert("You are out of permits!");
-          }
-        });
-      };
-
-      var i = 0;
-      for (probId in probIds) {
-        $scope.getPermit(i, false);
-        i++;
-      }
 
       $scope.processSubmitForm = function (index) {
         submitUrl = 'api/v1/submit/' + probIds[index] + '/solution';
         submitData = { '_xsrf': $cookies._xsrf,
-                       'outputFile': $scope.files.output[index],
-                       'sourceFile': $scope.files.source[index], };
-        $rootScope.showSubmit[index] = false;
-        $rootScope.ttl[index] = 0;
-        if ($rootScope.tick[index] != null) {
-          $interval.cancel($rootScope.tick[index]);
-          $rootScope.tick[index] = null;
-        }
+                       'lang': $scope.submLangs[index],
+                       'filename': $scope.files.source[index][0],
+                       'sourceFile': $scope.files.source[index][1], };
         $http({
           method  : 'POST',
           url     : submitUrl,
@@ -432,19 +365,18 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
           if (data) {
-            $scope.solved[probIds[index]] = true;
-            setTimeout(function () {
-                $window.alert("Solution accepted!");
-            }, 100);
+            $window.alert("Submitted successfully!");
           } else {
-            setTimeout(function () {
-                $window.alert("Solution incorrect!");
-            }, 100);
+            $window.alert("Failed to submit. Try again!");
           }
         });
       };
     }]);
 
 contestControllers.controller('ScoreboardCtrl', ['$scope', '$http',
+    function ($scope, $http) {
+    }]);
+
+contestControllers.controller('SubmissionsCtrl', ['$scope', '$http',
     function ($scope, $http) {
     }]);

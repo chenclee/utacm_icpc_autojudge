@@ -1,0 +1,56 @@
+<h1 class="page-header">Marble Run</h1>
+
+<p>You just got the best present or your birthday: A marble run!</p>
+<img src=http://www.funlearning.co.uk/image/cache/data/building_and_construction/TTT0012E_Marbulous_80_Piece_Marble_Run_C_1-700x700.jpg />
+<p>A marble run kit consists of a number of pieces. Each piece goes slightly downhill so that the marble continues moving. Each piece has 1 entrance and 0 or more exits. If the piece has more than 1 exit, it randomly ends up in one of them. There are also fancier pieces that take longer than others, because they have a swirl, go back and forth, etc..</p>
+<img src="http://cdn.rainbowresource.netdna-cdn.com/products/033701.jpg">Example Pieces</img>
+<p>There is going to be exactly one entrance to your marble coaster, and at least 1 exit. Your mom gets mad at you and says that it's dangerous to put more than one marble in the run at a time. So, you want to calculate the maximum time it will take for a marble to reach the end. An end of the run is defined as completely moving through a piece that has 0 exits.</p>
+
+<h4>Input</h4>
+
+<p>The first line of input will contain a single integer R, the number of runs you want to make.<br/>
+The first line of each run contains a single integer N, the number of pieces in the run. The first piece in the run is always the starting piece<br/>
+N lines follow, representing the list of pieces in the run.<br/>
+Each piece consists of a single line with at least 1 integer. The first integer is the time T it takes to move from the entrance to any of the exits of the piece. Each of the remaining integers on the line specifies an exit for the piece. The integer specifies which other piece's entrance that exit goes to, with the integer representing the 0-indexed piece in the run. It is guaranteed each piece except the start has exactly one piece going into it, and the start piece has 0 pieces going into it.<br/>
+</p>
+
+<h4>Constraints</h4>
+
+<p>
+1 &le; R &le; 10<br/>
+1 &le; T &le; 1000<br/>
+1 &le; N &le; 1000<br/>
+1 &le; E &lt; N<br/>
+</p>
+
+<h4>Output</h4>
+
+<p>
+For each test case, print the maximum amount of time before the marble hits an exit.
+</p>
+
+<h4>Sample Input</h4>
+
+<pre>
+2
+3
+4 2
+6
+3 1
+4
+5 1 2
+2 3
+7
+3
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+13
+12
+</pre>
+
+
+<h4>Explanation of Sample Data</h4>
+<p>In the first case, you start at piece 0. It takes the marble 4 seconds to reach the exit of piece 0. Then, it goes to the entrance of piece 2. In piece 2, the marble takes 3 seconds to reach the exit, then it goes to piece 1. Piece 1 takes 6 seconds, and has no exit, so the marble stops. This results in a total time of 4 + 3 + 6 = 13.<br/>
+In the second case, you start at piece 0. It takes the marble 5 seconds to reach the exit. Then it either goes to piece 1 or piece 2. If it goes to piece 1, it takes 2 seconds to reach the exit, ad then goes to piece 3. It takes 3 seconds to reach the end of piece 3, at which point it stops. If it instead went to piece 2, it takes 7 seconds to reach the exit, and then stops. Thus, the total time is 5 + max(2 + 3, 7) = 5 + 7 = 12.</p>

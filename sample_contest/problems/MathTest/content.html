@@ -1,0 +1,51 @@
+<h1 class="page-header">Math Test</h1>
+
+<p>You're absolutely terrible at math. You don't understand what the need for math is if you have a computer. So... As a result, you have failed your math test. However, your teacher knows that you're a star programmer, so she has given you an interesting compromise...</p>
+
+<p>If you create a program to automatically grade the math tests, she will give you an A in the class. It's quite a fair trade, so you'll do your best to accomplish this.</p>
+
+<p>You're very fortunate that tests are only over addition and subtraction, and maybe sometimes multiplication. The questions are always in the format of A OP B = C, where A and B are integers and OP is either '+', '-', or '*'. Determine the percentage of answers provided, C, are correct.</p>
+
+<h4>Input</h4>
+
+<p>The first line of input will contain a single integer T, the number of test cases you have<br/>
+The first line of each test case contains an integer N, the number of questions on the test.<br/>
+The following N lines have each question of the test which is in the format shown in the description.
+</p>
+
+<h4>Constraints</h4>
+
+<p>
+1 &le; T &le; 10<br/>
+1 &le; N &le; 1000<br/>
+1 &le; A &le; 100<br/>
+1 &le; B &le; 100<br/>
+</p>
+
+<h4>Output</h4>
+
+<p>
+For each test case, print the percentage of correct answers on the test rounded to the nearest integer.
+</p>
+
+<h4>Sample Input</h4>
+
+<pre>
+2
+3
+1 + 2 = 3
+2 - 1 = 1
+4 * 2 = 12
+4
+1 + 1 = 2
+2 + 2 = 4
+2 * 2 = 4
+3 - 4 = -1
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+67%
+100%
+</pre>
+

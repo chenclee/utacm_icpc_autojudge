@@ -1,0 +1,46 @@
+<h1 class="page-header">Hangman</h1>
+
+<p>Given that you're psychic, hangman is just way too easy for you. You guess each hidden word or phrase perfectly that no one wants to even make up words or phrases anymore. Now, you still need to win, but apply your physic skills in some way.</p>
+
+<p>In hangman, you draw a feature of a person every time the other player guesses incorrect, and once you draw the whole person, they lose. You have already picked which phrase you are going to ask them. Since you are psychic, you know the order of letters everyone is going to guess on your phrase. You want them to lose, but you don't want to make it look impossible. As a result, you want to find the maximum number of features you can make for your person while making them still lose. What is this number?</p>
+<p>If you don't get to write any features because they are too good, output "Are they psychic?!"</p>
+
+<h4>Input</h4>
+
+<p>The first line of input will contain a single integer T, the number of test cases you have<br/>
+The first line of each test case contains an integer K, the number of letters in the following word or phrase.<br/>
+The second line of each test case contains the word or phrase, S, that has strictly lowercase letters and underscores for spaces.<br/>
+The third line of each test case contains the alphabet in lowercase letters, showing the order (left to right) of the letters the others will guess.
+</p>
+
+<h4>Constraints</h4>
+
+<p>
+1 &le; T &le; 10<br/>
+1 &le; K &le; 1000<br/>
+</p>
+
+<h4>Output</h4>
+
+<p>
+For each test case, print the most number of guesses you should give that also makes them lose. If no number of guesses satisfy this need, output, "Are they psychic?!".
+</p>
+
+<h4>Sample Input</h4>
+
+<pre>
+2
+7
+racecar
+abcdefghijklmnopqrstuvwxyz
+41
+the_quick_brown_fox_jumps_over_a_lazy_dog
+zyxwvutsrqpomnlkjihgfedcba
+</pre>
+
+<h4>Sample Output</h4>
+<pre>
+14
+Are they psychic?!
+</pre>
+

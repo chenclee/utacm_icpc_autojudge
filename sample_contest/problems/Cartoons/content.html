@@ -1,0 +1,63 @@
+<h1 class="page-header">Cartoons</h1>
+
+<p>It's 8 am on saturday morning, and as every child knows, that means it is cartoon watching time!</p>
+<p>You are going to sit at your TV from 8 am to lunch, whenever that may be. You have a set of favorite cartoons that you want to watch. Given the programming on the channels these cartoons are on, you want to figure out what to watch.</p>
+<p>Unfortunately, your remote is almost out of battery. You calculate that you can only change the channel K more times before the remote dies. The TV always goes to channel 0 first when you turn it on. What is the maximum number of your favorite cartoons you can catch? (No partial cartoons, something important always happens at the beginning and the end)</p>
+<p>All of the cartoons are exactly 30 minutes long. The programming will be given as a list of cartoons for each channel, with the first in the list airing at 8:00 am, the second at 8:30 am, etc...</p>
+
+<h4>Input</h4>
+
+<p>The first line of input will contain a single integer T, the number of test cases.<br/>
+The first line of each test case will contain four integers: N, C, S, and K. N is the number of shows that will air before lunch, C is the number of channels, S is the number of cartoons in the set of favorite cartoons, and K is the number of channel changes your remote has left.<br/>
+The second line of each test case contains S space-separated strings, where each string is the name of one of your favorite cartoons.<br/>
+The following C lines each contain N space separated strings, the programming for each channel, where each string is the name of the cartoon airing at that time slot.<br/></p>
+
+<h4>Constraints</h4>
+
+<p>
+1 &le; T &le; 10<br/>
+1 &le; C &le; 10<br/>
+1 &le; N &le; 1000<br/>
+1 &le; K &le; N<br/>
+1 &le; S &le; N*C<br/>
+All names will be under 20 characters in length
+</p>
+
+<h4>Output</h4>
+
+<p>
+For each test case, print the maximum number of your favorite cartoons you can catch.
+</p>
+
+<h4>Sample Input</h4>
+
+<pre>
+3
+4 2 3 5
+E C H
+A B C D
+E F G H
+1 2 2 1
+TMNT Pokemon
+Pokemon
+TMNT
+5 3 4 2
+A B C D
+A X1 X2 X3 X4
+Y1 B Y2 Y3 Y4
+Z1 Z2 C Z3 D
+</pre>
+
+<h4>Sample Output</h4>
+
+<pre>
+3
+1
+4
+</pre>
+
+
+<h4>Explanation of Sample Data</h4>
+<p>In the first case, you start on channel 0. If you don't change the channel immediately, you will miss E. Then, if you don't change it back to channel 0 by 9 am, you will miss C, and then if you change the channel from 0 to 1 right at the end of C, you catch all of H. Thus, the max is 3.</p>
+<p>In the second case, either you switch channels at the very start, or not at all. Either way, you can't catch all of both shows, so the maximum you can get is 1.</p>
+<p>In the third case, you watch A on channel 0, switch immediately to B, and then immediately to C, and then half-watch Z3 in anticipation of D on the same channel.</p>

@@ -25,15 +25,16 @@ contestApp.config(['$routeProvider',
         })
         .when('/problems', {
           templateUrl: '/static/views/problems.html',
-          controller: 'ProblemCtrl'
-        })
-        .when('/problems/:probId', {
-          templateUrl: '/static/views/problems.html',
-          controller: 'ProblemCtrl'
+          controller: 'ProblemCtrl',
+          reloadOnSearch: false
         })
         .when('/scoreboard', {
           templateUrl: '/static/views/scoreboard.html',
           controller: 'ScoreboardCtrl'
+        })
+        .when('/submissions', {
+          templateUrl: '/static/views/submissions.html',
+          controller: 'SubmissionsCtrl'
         })
         .when('/admin', {
           templateUrl: '/static/views/admin.html',
@@ -76,7 +77,8 @@ contestApp.directive("fileread", [function () {
         var reader = new FileReader();
         reader.onload = function (loadEvent) {
           scope.$apply(function () {
-            scope.fileread = loadEvent.target.result;
+            scope.fileread = [ changeEvent.target.files[0].name,
+                               loadEvent.target.result ];
           });
         }
         reader.readAsDataURL(changeEvent.target.files[0]);

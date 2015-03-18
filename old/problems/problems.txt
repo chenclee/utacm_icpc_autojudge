@@ -1,2 +1,0 @@
-[('A', 'Problem A'),
- ('B', 'Problem B'),]

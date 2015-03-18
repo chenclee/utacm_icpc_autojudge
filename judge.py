@@ -1,207 +1,124 @@
 import time
+import re
 import os
 import pickle
 import datetime
-import sqlite3
+import threading
+import Queue
+
+from random import choice
 
 class Judge:
+    lang_compile = {'GNU C++ 4': ['g++', '-static', '-fno-optimize-sibling-calls',
+                                  '-fno-strict-aliasing', '-DONLINE_JUDGE', '-lm',
+                                  '-s', '-x', 'c++', '-Wl', '--stack=268435456',
+                                  '-O2', '-o', 'prog_bin'],
+                    'GNU C++11 4': ['g++', '--std=c++11', '-O2', '-o', 'prog_bin'],
+                    'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
+                                '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
+                                '-lm', '-s', '-Wl', '--stack=268435456', '-O2',
+                                '-o', 'prog_bin'],
+                    'Java 6, 7': ['javac', '-cp', '".;*"']}
 
-    def __init__(self, contest, prob_ids, contest_dir):
-        """Read in config files for problem set
+    lang_run = {'GNU C++ 4': ['./prog_bin'],
+                'GNU C++11 4': ['./prog_bin'],
+                'GNU C 4': ['./prog_bin'],
+                'Java 6, 7': ['java', '-Xmx512M', '-Xss64M', '-DONLINE_JUDGE=true'],
+                'Python 2.7': ['python']
+    }
 
-        contest - pointer to contest state obj
-        permits - dict mapping users to problems to permits issued
-        prob_cfgs - dict mapping problems to problem configurations
-        submitted_runs - ???
-
-        Parameters:
-            contest  - pointer to contest object
-            prob_ids - prob_ids
-            contest_dir - path to contest files directory
-        """
+    def __init__(self, contest, problems, contest_dir, logger):
         self.contest = contest
-        self.permits = {}
+        self.problems = problems
         self.contest_dir = contest_dir
-        self.prob_cfgs = (
-            {prob_id: self.load_cfg(prob_id) for prob_id in prob_ids})
-        self.submitted_runs = {}
+        self.queue = Queue.Queue()
+        self.logger = logger
 
-    def load_cfg(self, prob_id):
-        """Read configuration file for a problem statement
+        self.subm_dir = os.path.join(contest_dir, 'submissions')
+        self.log_path = os.path.join(self.subm_dir, 'log.txt')
 
-        Parameter:
-            prob_id - problem id to load configuration for
+        self.judger = threading.Thread(target=self.judge_next)
+        self.judging = True
+        self.judger.start()
 
-        return - dictionary of configuration parameters
-        """
-        path = '%s/problems/%s/config.txt' % (self.contest_dir, prob_id)
-        with open(path, 'r') as in_file:
-            return eval(in_file.read())
-
-    def get_expiring_permit(self, user_id, prob_id, create=True):
-        """Return a unique id and keep a record of its expiration date
-
-        Parameters:
-            user_id - unique user id
-            prob_id - problem statement id
-
-        Return - returns {'is_new', 'ttl'} or None if the max number
-                 of permits for the user and problem has been reached.
-        """
-        if user_id not in self.permits:
-            self.permits[user_id] = {prob_id: [] for prob_id in self.prob_cfgs}
-
-        now = time.time()
-        if len(self.permits[user_id][prob_id]) > 0:
-            last_permit = self.permits[user_id][prob_id][-1]
-
-            if last_permit['correct']:
-                return "solved"
-
-            ttl = last_permit['expiration'] - now
-            if ttl > 0 and last_permit['correct'] is None:
-                return {'is_new': False, 'ttl': int(ttl)}
-
-        if (len(self.permits[user_id][prob_id])
-                == self.prob_cfgs[prob_id]['max_attempts']):
-            return None
-
-        if not create:
-            return None
-
-        # if another attempt is valid, generate uuid and store data
-        permit_num = len(self.permits[user_id][prob_id])
-        self.permits[user_id][prob_id].append({
-            'expiration': now + self.prob_cfgs[prob_id]['time_allowed'],
-            'input_file': self.prob_cfgs[prob_id]['inputs'][permit_num],
-            'output_file': self.prob_cfgs[prob_id]['outputs'][permit_num],
-            'correct': None
-        })
-        return {'is_new': True, 'ttl': int(self.prob_cfgs[prob_id]['time_allowed'])}
-
-    def get_solved_problems(self, user_id):
-        solved = {}
-        for prob_id in self.prob_cfgs:
+    def judge_next(self):
+        while self.judging:
             try:
-                solved[prob_id] = self.permits[user_id][prob_id][-1]['correct']
-            except:
-                solved[prob_id] = False
-        return solved
+                subm_id, log = self.queue.get(timeout=1)
+                self.logger.info("Judging submission %d: %s, %s" %
+                        (subm_id, log['user_id'], log['prob_id']))
+                self.logger.debug("log: " + str(log))
 
-    def get_remaining_permit_counts(self, user_id):
-        remaining_counts = {}
-        for prob_id in self.prob_cfgs:
-            try:
-                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts'] - len(self.permits[user_id][prob_id])
-            except:
-                remaining_counts[prob_id] = self.prob_cfgs[prob_id]['max_attempts']
-        return remaining_counts
+                result = choice(['CE', 'AC', 'WA', 'RE', 'TL', 'ML', 'OL'])
+                self.logger.info("Result: %s" % (result,))
+                self.contest.change_submission(subm_id, result)
+                self.queue.task_done()
+            except Queue.Empty:
+                pass
+        self.logger.info("Judging has been halted")
 
-    def get_problems_time_to_solve(self):
-        times = {}
-        for prob_id in self.prob_cfgs:
-            times[prob_id] = self.prob_cfgs[prob_id]['time_allowed']
-        return times
+    def halt_judging(self):
+        self.judging = False
 
-    def valid_permit(self, user_id, prob_id):
-        """Test whether a permit is valid
-        (eg exists and has not expired)
+    def enqueue_submission(self, user_id, prob_id, lang, source_name, source):
+        """Adds submission to judging queue.
 
-        Parameter:
-            user_id - owner of the permit
-            prob_id - problem the permit is for
-
-        return - true if permit is valid and false otherwise
-        """
-        now = time.time()
-        if (user_id in self.permits
-                and prob_id in self.permits[user_id]
-                and len(self.permits[user_id][prob_id]) > 0):
-            return (now < self.permits[user_id][prob_id][-1]['expiration']
-                    and self.permits[user_id][prob_id][-1]['correct'] is None)
-        return False
-
-    def get_input_text(self, user_id, prob_id):
-        """Return input file data for user to run program on
-
-        Parameter:
-            user_id - user requesting the input file
-            prob_id - problem the user is request input for
-
-        return - test data for user to run their program on
-        """
-        if not self.valid_permit(user_id, prob_id):
-            return None
-
-        input_file = '%s/problems/%s/%s' % (
-            self.contest_dir, prob_id,
-            self.permits[user_id][prob_id][-1]['input_file'])
-        with open(input_file, 'r') as in_file:
-            return in_file.read()
-
-    def judge_submission(self, user_id, prob_id, source, output):
-        """Test output sent from contestant
+        Submission is added as: (subm_id, 
+                                 {"submit_time"  : ...,
+                                  "user_id"    : ...,
+                                  "prob_id"    : ...,
+                                  "lang"       : ...,
+                                  "source_path": ...})
 
         Parameters:
             user_id - user who is submitting output
             prob_id - problem the user is submitting output for
+            lang - language source is in
+            source_name - name of the source code file
             source - source code
-            output - output to test against correct output
 
         return - true if output was correct and false otherwise
         """
-        if not self.valid_permit(user_id, prob_id):
-            return None
-        output = '\n'.join([line.strip('\n\r ') for line in output.splitlines()])
-        storage_string = '%s/submissions/%s/%s/%s' % (
-            self.contest_dir, prob_id, user_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
-        source_string = '%s/submissions/%s/%s/%s.source' % (
-            self.contest_dir, prob_id, user_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
-        if not os.path.exists(os.path.dirname(storage_string)):
-            os.makedirs(os.path.dirname(storage_string))
-        with open(source_string, 'w') as storage_file:
-            storage_file.write(source)
-        with open(storage_string, 'w') as storage_file:
-            storage_file.write(output)
-        self.permits[user_id][prob_id][-1]['storage_file'] = storage_string
-        now = time.time()
-        output_file = '%s/problems/%s/%s' % (
-            self.contest_dir, prob_id,
-            self.permits[user_id][prob_id][-1]['output_file'])
-        with open(output_file, 'r') as out_file:
-            out_file_string = '\n'.join([line.strip('\n\r ') for line in out_file.readlines()])
-            result = out_file_string.strip() == output.strip()
-            self.permits[user_id][prob_id][-1]['correct'] = result
-            self.permits[user_id][prob_id][-1]['time'] = now
-            self.contest.submit_result(user_id, prob_id, now, result)
-            return result
+        # add submission to judging queue
+        if lang not in Judge.lang_run:
+            self.logger.warn("Invalid language for source code: '%s'" % lang)
+            return False
+        elif re.search(r'[^\w\.]', source_name):
+            self.logger.warn("Invalid filename for source code: '%s'" % source_name)
+            return False
+        submit_time = (int(time.time()) - self.contest.start_time) / 60
+        subm_id = self.contest.add_submission(user_id, prob_id, lang, submit_time)
+        source_path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id), source_name)
+        if not os.path.exists(os.path.dirname(source_path)):
+            os.makedirs(os.path.dirname(source_path))
+        with open(source_path, 'w') as out_file:
+            out_file.write(source)
+        with open(self.log_path, 'a') as out_file:
+            log = {"submit_time": submit_time,
+                   "user_id": user_id,
+                   "prob_id": prob_id,
+                   "lang": lang,
+                   "source_path": source_path}
+            out_file.write("%s\n" % (log.__repr__(),))
+        self.queue.put((subm_id, log))
+        return True
 
-    def rejudge_problem(self, prob_id):
-        """Regrade all submissions for a given problem
-
-        Parameters:
-            prob_id - problem to check outputs for
-            output - output to test against correct output
-        """
-        self.contest.nullify_prob(prob_id)
-        for user_id in self.permits:
-            for submission in self.permits[user_id][prob_id]:
-                if 'storage_file' in submission:
-                    storage_string = submission['storage_file']
-                    output_file = '%s/problems/%s/%s' % (
-                        self.contest_dir, prob_id,
-                        submission['output_file'])
-                    with open(output_file, 'r') as out_file:
-                        with open(storage_string, 'r') as storage_file:
-                            result = out_file.read().strip() == storage_file.read().strip()
-                            submission['correct'] = result
-                            self.contest.submit_result(user_id, prob_id,
-                                                       submission['time'], result)
-
-    def save_data(self):
-        """Pickle permit data structure"""
-        with open(self.contest_dir + '/' + str(datetime.datetime.now()) + '.permits.data', 'w') as f:
-            pickle.dump(self.permits, f)
-        return self.permits
+    def rejudge_all(self):
+        """Regrade all submissions"""
+        while True:
+            try:
+                item = self.queue.get_nowait()
+                self.queue.task_done()
+            except Queue.Empty:
+                break
+        self.queue.join()
+        self.contest.reset_scoreboard()
+        with open(self.log_path, 'r') as in_file:
+            for line in in_file:
+                try:
+                    log = eval(line)
+                    subm_id = self.contest.add_submission(
+                            log['user_id'], log['prob_id'], log['lang'], log['submit_time'])
+                    self.queue.put((subm_id, log))
+                except Exception as e:
+                    print "Unable to parse log line:", e

@@ -2,10 +2,20 @@ import datetime
 import pickle
 import time
 import threading
+import sets
 
 
 class Contest:
-    def __init__(self, delay, duration, prob_ids, penalty):
+    verdicts = {'QU': 'In Queue',
+                'CE': 'Compile Error',
+                'AC': 'Accepted',
+                'WA': 'Wrong Answer',
+                'RE': 'Runtime Error',
+                'TL': 'Time Limit Exceeded',
+                'ML': 'Memory Limit Exceeded',
+                'OL': 'Output Limit Exceeded'}
+
+    def __init__(self, delay, duration, prob_ids, penalty, logger):
         """Initializes the contest.
 
         Parameter:
@@ -19,11 +29,13 @@ class Contest:
         self.start_time = self.init_time + delay
         self.end_time = self.start_time + duration
         self.prob_ids = prob_ids
-        self.submitted_runs = []
-        self.cached_scoreboard = {}
+        self.next_subm_id = 0
+        self.submissions = {}
+        self.scoreboard = []
         self.penalty = penalty
         self.frozen = False
         self.clarifs = []
+        self.logger = logger
 
     def is_running(self):
         """Returns whether the contest is currently running."""
@@ -49,44 +61,6 @@ class Contest:
         """
         self.end_time += duration
 
-    def recompute_scoreboard(self):
-        """Recomputes the scoreboard."""
-        scoreboard = {}
-        for entry in self.submitted_runs:
-            if entry[0] not in scoreboard:
-                scoreboard[entry[0]] = {
-                    'penalty': 0,
-                    'attempts': {prob_id: 0 for prob_id in self.prob_ids},
-                    'solved': {prob_id: None for prob_id in self.prob_ids},
-                    'score': 0
-                }
-            if scoreboard[entry[0]]['solved'][entry[1]] is not None:
-                continue
-            if entry[3]:
-                time_solved = int((entry[2] - self.start_time) / 60.0)
-                scoreboard[entry[0]]['solved'][entry[1]] = time_solved
-                scoreboard[entry[0]]['score'] += 1
-                scoreboard[entry[0]]['penalty'] += (
-                    self.penalty * scoreboard[entry[0]]['attempts'][entry[1]]
-                    + time_solved)
-            scoreboard[entry[0]]['attempts'][entry[1]] += 1
-
-        entries = []
-        for user_id in scoreboard:
-            sort_key = (-scoreboard[user_id]['score'],
-                        scoreboard[user_id]['penalty'])
-            stats = []
-            for prob_id in self.prob_ids:
-                if scoreboard[user_id]['solved'][prob_id] is not None:
-                    p1 = scoreboard[user_id]['solved'][prob_id]
-                else:
-                    p1 = '-'
-                p2 = scoreboard[user_id]['attempts'][prob_id]
-                stats.append("%s/%s" % (p1, p2))
-            entries.append((sort_key, user_id[1], tuple(stats)))
-        entries.sort()
-        self.cached_scoreboard = tuple(entries)
-
     def is_frozen(self):
         return self.frozen
 
@@ -99,48 +73,133 @@ class Contest:
         if self.frozen == freeze:
             return
         self.frozen = freeze
-        if not self.frozen:
-            self.recompute_scoreboard()
+        if freeze:
+            self.scoreboard_copy = self.scoreboard
+        else:
+            self.scoreboard_copy = []
 
-    def get_scoreboard(self):
+    def get_scoreboard(self, live=False):
         """Returns the current scoreboard or if the scoreboard is frozen,
-        the scoreboard at the time of the freeze.
-        """
-        return self.cached_scoreboard
+        the scoreboard at the time of the freeze, unless live is set to
+        True.
 
-    def submit_result(self, user_id, prob_id, submit_time, result):
-        """Submits the results for a user submission to the scoreboard.
+        Parameters:
+            live - if this value is True, the scoreboard returned will always
+                   be live, ignoring the frozen state of the scoreboard
+        """
+        return self.scoreboard if not self.frozen or live else self.scoreboard_copy
+
+    def get_submissions(self, user_id):
+        """Returns all submissions made by user_id sorted by submission time.
+
+        Parameters:
+            user_id - user id
+        """
+        return [self.submissions[subm_id] for subm_id in xrange(self.next_subm_id - 1, -1, -1)
+                if self.submissions[subm_id]['user_id'] == user_id]
+
+    def get_solved(self, user_id):
+        """Returns whether each problem has been solved.
+
+        Parameters:
+            user_id - user id
+        """
+        solved = {prob_id: False for prob_id in self.prob_ids}
+        for submission in self.get_submissions(user_id):
+            if submission['result'] == 'AC':
+                solved[submission['prob_id']] = True
+        return solved
+
+    def add_submission(self, user_id, prob_id, lang, submit_time, result='QU'):
+        """Adds a submission result to the scoreboard.
+
+        A submission is in the following format:
+            {'user_id': ...,
+             'prob_id': ...,
+             'lang': ...,
+             'submit_time': ...,
+             'run_time': ...,
+             'result': ...}
 
         Parameters:
             user_id - user id
             prob_id - problem id of submission
-            submit_time - time of submission (use time.time())
-            result - whether the submission was bueno
+            submit_time - minute into contest of submission
+            result - 'QU': In Queue
+                     'CE': Compile Error
+
+                     'AC': Accepted
+                     'WA': Wrong Answer
+                     'RE': Runtime Error
+                     'TL': Time Limit Exceeded
+                     'ML': Memory Limit Exceeded
+                     'OL': Output Limit Exceeded
         """
-        self.submitted_runs.append(
-            (user_id, prob_id, submit_time, result))
-        if not self.frozen:
-            self.recompute_scoreboard()
+        subm_id = self.next_subm_id
+        self.next_subm_id += 1
+        self.submissions[subm_id] = {'user_id': user_id,
+                                     'prob_id': prob_id,
+                                     'lang': lang,
+                                     'submit_time': submit_time,
+                                     'subm_id': subm_id,
+                                     'run_time': 0.0,
+                                     'result': result}
+        self.logger.debug("submission: " + str(self.submissions[subm_id]))
+        if result not in ('QU', 'CE'):
+            self.update_scoreboard()
+        return subm_id
 
-# you pass in the prob_id
-# self.submitted_Runs
-# is equal to
-# list comprehension
-# which means this list contains
-# runs
-# where runs are the runs in self.submitted_runs if and only if the run[1] (the run's problem id) is not equal to the prob_id you are nullifying
-
-    def nullify_prob(self, prob_id):
-        """Deletes ALL of the results for a given prob_id.
-
-        Used by the judge for regrading a problem, in the event that
-        there was incorrect judging.
+    def change_submission(self, subm_id, result):
+        """Changes the result of a submission.
 
         Parameters:
-            prob_id - id of the problem, whose submissions to delete
+            subm_id - id of the submission to change.
+            result - see #add_submission(...) for valid results
         """
-        self.submitted_runs = (
-            [run for run in self.submitted_runs if run[1] != prob_id])
+        self.submissions[subm_id]['result'] = result
+        self.update_scoreboard()
+
+    def update_scoreboard(self):
+        """Updates the scoreboard by recalculating each user's points and
+        penalties.
+        """
+        points = {}
+        for i in xrange(self.next_subm_id):
+            s = self.submissions[i]
+            u = s['user_id']
+            if u not in points:
+                points[u] = {'num_solved': 0, 'penalty': 0,
+                             'solved': {pid: [-1, 0] for pid in self.prob_ids},
+                             'accum': {pid: 0 for pid in self.prob_ids}}
+            if points[u]['accum'][s['prob_id']] >= 0:
+                points[u]['solved'][s['prob_id']][1] += 1
+                if s['result'] == 'AC':
+                    points[u]['solved'][s['prob_id']][0] = s['submit_time']
+                    points[u]['num_solved'] += 1
+                    points[u]['penalty'] += points[u]['accum'][s['prob_id']]
+                    points[u]['penalty'] += s['submit_time']
+                    points[u]['accum'][s['prob_id']] = -1
+                elif s['result'] not in ('QU', 'CE'):
+                    points[u]['accum'][s['prob_id']] += self.penalty
+
+        # Make solved negative to sort by highest score, and fix negative after.
+        self.scoreboard = sorted([(-points[user_id]['num_solved'],
+                                   points[user_id]['penalty'],
+                                   user_id,
+                                   points[user_id]['solved'])
+                                   for user_id in points])
+        self.scoreboard = [(c, -a, b, d) for a, b, c, d in self.scoreboard]
+        self.logger.debug("scoreboard: " + str(self.scoreboard))
+
+    def reset_scoreboard(self):
+        """Clears the entire scoreboard.
+
+        Used by the judge for rejudging problems, in the event that
+        there were incorrect specifications.
+        """
+        self.next_subm_id = 0
+        self.submissions = {}
+        self.scoreboard = []
 
     def get_clarifs(self, user_id):
         """Gets the clarifications/responses for a user.
@@ -188,6 +247,3 @@ class Contest:
             return True;
         except:
             return False;
-
-    def get_submissions(self):
-        return self.submitted_runs
