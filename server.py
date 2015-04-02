@@ -372,7 +372,7 @@ if __name__ == '__main__':
 
     application.listen(
         port=options.port,
-        max_buffer_size=128*1024,
+        max_buffer_size=40*1024,
     )
 
     signal.signal(signal.SIGUSR1, lambda x, y: judge.halt_judging())
