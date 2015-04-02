@@ -6,6 +6,8 @@ import datetime
 import threading
 import Queue
 import uuid
+import sys
+import traceback
 
 import subprocess32
 
@@ -13,20 +15,17 @@ from contest import Contest
 
 class Judge:
     lang_compile = {'GNU C++ 4': ['g++', '-static', '-DONLINE_JUDGE',
-                                  '-lm', '-s', '-x', 'c++', '-O2',
-                                  '-o', 'prog_bin'],
+                                  '-lm', '-s', '-x', 'c++', '-O2'],
                     'GNU C++11 4': ['g++', '-static', '-DONLINE_JUDGE',
-                                    '-lm', '-s', '-x', 'c++', '-std=c++11', '-O2',
-                                    '-o', 'prog_bin'],
+                                    '-lm', '-s', '-x', 'c++', '-std=c++11', '-O2'],
                     'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
                                 '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
-                                '-lm', '-s', '-O2',
-                                '-o', 'prog_bin'],
+                                '-lm', '-s', '-O2'],
                     'Java 6, 7': ['javac', '-cp', '".;*"']}
 
-    lang_run = {'GNU C++ 4': ['./prog_bin'],
-                'GNU C++11 4': ['./prog_bin'],
-                'GNU C 4': ['./prog_bin'],
+    lang_run = {'GNU C++ 4': ['./a.out'],
+                'GNU C++11 4': ['./a.out'],
+                'GNU C 4': ['./a.out'],
                 'Java 6, 7': ['java', '-Xmx512M', '-Xss64M', '-DONLINE_JUDGE=true'],
                 'Python 2.7': ['python'],
                 'Python 3.4': ['python3']
@@ -42,43 +41,52 @@ class Judge:
         self.subm_dir = os.path.join(contest_dir, 'submissions')
         self.log_path = os.path.join(self.subm_dir, 'log.txt')
 
-        self.judger = threading.Thread(target=self.judge_func)
         self.judging = True
-        self.judger.start()
+        for i in xrange(4):
+	    threading.Thread(target=self.judge_func, args=("judge%d" % i,)).start()
 
-    def judge_func(self):
+        self.killer = threading.Thread(target=self.kill_func)
+        self.killer.start()
+
+    def kill_func(self):
+	while self.judging:
+	    killer = subprocess32.call("docker ps | grep '[2-5][0-9] seconds ago' | awk '{print $1}' | xargs --no-run-if-empty docker kill", shell=True)
+	    killer = subprocess32.call("docker ps -a | grep 'Exited' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f", shell=True)
+            time.sleep(5)
+
+    def judge_func(self, user):
         while self.judging:
-            result = 'QU'
+            result = 'JE'
             elapsed = 0.0
             try:
                 subm_id, log = self.queue.get(timeout=1)
-                self.logger.info("Judging submission %d: %s, %s" %
-                        (subm_id, log['user_id'], log['prob_id']))
-                self.logger.debug("log: " + str(log))
+                self.logger.info("%s: judging submission %d (%s, %s, %s, %s)" %
+                        (user, subm_id, log['prob_id'], log['source_name'], log['lang'], log['user_id']))
+                self.logger.debug("%s: log=%s" % (user, str(log)))
+		self.contest.change_submission(subm_id, result='CJ')
 
                 if log['lang'] in Judge.lang_compile:
                     compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
-                    docker_cmd = ['docker', 'run', '-v',
-                            '"%s":/judging_dir' % (os.path.abspath(log['path']),),
-                            '-w', '/judging_dir', 'chenclee/sandbox',
-                            '/bin/sh', '-c', "'%s'" % ' '.join(compile_cmd)]
-                    self.logger.debug("docker_cmd: " + ' '.join(docker_cmd))
-                    compiler = subprocess32.Popen(' '.join(docker_cmd), shell=True, stderr=subprocess32.PIPE)
+                    self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
+                    compiler = subprocess32.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess32.PIPE)
                     try:
-                        stderr_data = compiler.communicate(timeout=2)[1]
+                        stderr_data = compiler.communicate(timeout=15)[1]
                         if compiler.returncode != 0:
                             result = 'CE'
+                            self.logger.debug("%s: compile returned non-zero exit status" % user)
+                            self.logger.debug("%s: %s" % (user, stderr_data))
                             with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
                                 out_file.write(stderr_data)
                             raise AssertionError()
                     except subprocess32.TimeoutExpired:
                         compiler.kill()
                         compiler.communicate()
+                        elapsed = 15
                         result = 'CE'
-                        with open(os.path.join(log['path'], 'errors.txt'), 'w') as out_file:
-                            out_file.write("Compile Time Exceeded (2 seconds)\n")
+                        self.logger.debug("%s: compile took longer than 15 seconds" % user)
+                        with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
+                            out_file.write("Exceeded max time allowed (15 seconds) for compiling.")
                         raise AssertionError()
-
                 prob = self.problems[log['prob_id']]
                 run_cmd = ['time', '--portability'] + Judge.lang_run[log['lang']]
                 if 'Java' in log['lang']:
@@ -86,20 +94,22 @@ class Judge:
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
                 docker_cmd = ['docker', 'run', '-i',
-                        '-m="%dm"' % (prob.mem_limit,),
-                        '-v', '"%s":/judging_dir' % (os.path.abspath(log['path']),),
-                        '-w', '/judging_dir', 'chenclee/sandbox',
-                        '/bin/sh', '-c', "'%s'" % ' '.join(run_cmd)]
-                self.logger.debug("docker_cmd: " + ' '.join(docker_cmd))
+                        #'--cpu-shares=256',
+                        '-m="%dm"' % (prob.mem_limit,), '--read-only',
+                        '-v', '"%s":/judging_dir:ro' % (os.path.abspath(log['path']),), '-w', '/judging_dir',
+                        '-u', user, 'chenclee/sandbox',
+                        ' '.join(run_cmd)]
+                self.logger.debug("%s: %s: " % (user, ' '.join(docker_cmd)))
                 runner = subprocess32.Popen(' '.join(docker_cmd), shell=True,
                         stdin=subprocess32.PIPE, stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
                 finished = False
                 try:
                     stdout_data, stderr_data = runner.communicate(
-                            input=prob.input_text(), timeout=(prob.time_limit * 4))
+                            input=prob.input_text, timeout=(prob.time_limit * 4))
                     regex = re.compile("(\d+\.\d{2})")
-                    self.logger.debug(stderr_data.splitlines()[-2:])
                     if runner.returncode != 0:
+                        self.logger.debug("%s: %s" % (user, stdout_data))
+                        self.logger.debug("%s: %s" % (user, stderr_data))
                         result = 'RE' if stderr_data.splitlines()[0].strip() != 'Command terminated by signal 9' else 'ML'
                         with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
                             out_file.write(stderr_data)
@@ -108,17 +118,17 @@ class Judge:
                     elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
                     if elapsed > prob.time_limit:
                         finished = True
+                        self.logger.debug(user + ": program ran to completion but user+sys time exceeds time limit.")
                         raise subprocess32.TimeoutExpired(
                                 cmd=' '.join(docker_cmd),
                                 timeout=prob.time_limit,
                                 output=None)
-                    # TODO: check stdout to correct
                     with open(os.path.join(log['path'], 'output.txt'), 'w') as out_file:
                         out_file.write(stdout_data)
                     actual = [line.strip() for line in stdout_data.splitlines() if line.strip() != '']
-                    expected = [line.strip() for line in prob.output_text().splitlines() if line.strip() != '']
-                    self.logger.debug("actual: " + str(actual[:10]))
-                    self.logger.debug("expected: " + str(expected[:10]))
+                    expected = [line.strip() for line in prob.output_text.splitlines() if line.strip() != '']
+                    self.logger.debug("%s: actual=%s" % (user, str(actual[:10])))
+                    self.logger.debug("%s: expected=%s" % (user, str(expected[:10])))
                     if actual == expected:
                         result = 'AC'
                     else:
@@ -135,13 +145,15 @@ class Judge:
             except AssertionError:
                 pass
             except Exception as e:
-                self.logger.error("Unable to judge: " + e.message)
+                self.logger.error("%s: %s" % (user, traceback.format_exception(*sys.exc_info())))
                 result = 'JE'
-            # result = choice(['CE', 'AC', 'WA', 'RE', 'TL', 'ML'])
-            self.logger.info("Result: %s" % (Contest.verdicts[result],))
+            self.logger.info("%s: result for submission %d is %s" % (user, subm_id, Contest.verdicts[result]))
             self.contest.change_submission(subm_id, result=result, run_time=elapsed)
             self.queue.task_done()
-        self.logger.info("Judging has been halted")
+
+            subprocess32.call('chdir "%s"; rm -f *.class; rm -f a.out' % log['path'], shell=True)
+
+        self.logger.info(user + " halted")
 
     def halt_judging(self):
         self.judging = False
@@ -170,7 +182,7 @@ class Judge:
         if lang not in Judge.lang_run:
             self.logger.warn("Invalid language for source code: '%s'" % lang)
             return False
-        elif re.search(r'[^\w\.]', source_name):
+        elif not re.match(r'^[0-9a-z-_\.+]+$', source_name):
             self.logger.warn("Invalid filename for source code: '%s'" % source_name)
             return False
         submit_time = (int(time.time()) - self.contest.start_time) / 60
@@ -179,6 +191,7 @@ class Judge:
         source_path = os.path.join(path, source_name)
         if not os.path.exists(os.path.dirname(source_path)):
             os.makedirs(os.path.dirname(source_path))
+        os.chmod(os.path.dirname(source_path), 0777)
         with open(source_path, 'w') as out_file:
             out_file.write(source)
         with open(self.log_path, 'a') as out_file:
