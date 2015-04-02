@@ -4,6 +4,7 @@ import os
 import uuid
 import signal
 import sys
+import traceback
 
 from tornado import ioloop, web, auth, httpserver, gen, escape, log
 from tornado.options import options, parse_command_line, define
@@ -208,8 +209,8 @@ class LogHandler(BaseHandler):
             with open(server_log_path, 'r') as in_file:
                 lines = [line for line in in_file.readlines() if all([v in line for v in value.split('/')])]
                 self.write(''.join(lines))
-        except Exception as e:
-            logger.error("unable to read log: " + e.message)
+        except:
+            logger.error("unable to read log: %s" % (traceback.format_exception(*sys.exc_info()),))
             self.write("unable to read log")
         self.write("</pre>")
 
