@@ -364,10 +364,10 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
           data    : $.param(submitData),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function (data) {
-          if (data) {
+          if (data[0]) {
             $window.alert("Submitted successfully!");
           } else {
-            $window.alert("Failed to submit. Try again!");
+            $window.alert(data[1]);
           }
         });
       };
