@@ -208,7 +208,8 @@ class LogHandler(BaseHandler):
             with open(server_log_path, 'r') as in_file:
                 lines = [line for line in in_file.readlines() if all([v in line for v in value.split('/')])]
                 self.write(''.join(lines))
-        except:
+        except Exception as e:
+            logger.error("unable to read log: " + e.message)
             self.write("unable to read log")
         self.write("</pre>")
 
