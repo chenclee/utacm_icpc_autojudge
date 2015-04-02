@@ -191,7 +191,9 @@ class ErrorFileHandler(BaseHandler):
         if not error_log:
             raise web.HTTPError(404)
         self.set_header('Content-Type', 'text/html')
+        self.write('<pre>')
         self.write(str(error_log))
+        self.write('</pre>')
 
 
 class LogHandler(BaseHandler):
