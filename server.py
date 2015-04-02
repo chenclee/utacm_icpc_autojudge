@@ -177,6 +177,23 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
+class ErrorFileHandler(BaseHandler):
+    @web.authenticated
+    def get(self, value):
+        user_id = self.current_user_id()
+
+        try:
+            subm_id = int(value)
+        except:
+            raise web.HTTPError(400)
+
+        error_log = contest.get_error_log(user_id, subm_id, is_admin=self.is_admin())
+        if not error_log:
+            raise web.HTTPError(404)
+        self.set_header('Content-Type', 'text/html')
+        self.write(str(error_log))
+
+
 class LogHandler(BaseHandler):
     @web.authenticated
     def get(self, value):
@@ -359,6 +376,7 @@ if __name__ == '__main__':
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
+            (r'/api/v1/errors/(.*)', ErrorFileHandler),
         ],
         cookie_secret=str(uuid.uuid4()),
         login_url='/auth/login',

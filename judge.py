@@ -49,9 +49,9 @@ class Judge:
         self.killer.start()
 
     def kill_func(self):
-	while self.judging:
-	    killer = subprocess32.call("docker ps | grep '[2-5][0-9] seconds ago' | awk '{print $1}' | xargs --no-run-if-empty docker kill", shell=True)
-	    killer = subprocess32.call("docker ps -a | grep 'Exited' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f", shell=True)
+        while self.judging:
+            killer = subprocess32.call("docker ps | grep '[2-5][0-9] seconds ago' | awk '{print $1}' | xargs --no-run-if-empty docker kill", shell=True)
+            killer = subprocess32.call("docker ps -a | grep 'Exited' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f", shell=True)
             time.sleep(5)
 
     def judge_func(self, user):
@@ -63,8 +63,9 @@ class Judge:
                 self.logger.info("%s: judging submission %d (%s, %s, %s, %s)" %
                         (user, subm_id, log['prob_id'], log['source_name'], log['lang'], log['user_id']))
                 self.logger.debug("%s: log=%s" % (user, str(log)))
-		self.contest.change_submission(subm_id, result='CJ')
+                self.contest.change_submission(subm_id, result='CJ')
 
+                error_log = None
                 if log['lang'] in Judge.lang_compile:
                     compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
@@ -75,6 +76,7 @@ class Judge:
                             result = 'CE'
                             self.logger.debug("%s: compile returned non-zero exit status" % user)
                             self.logger.debug("%s: %s" % (user, stderr_data))
+                            error_log = stderr_data
                             with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
                                 out_file.write(stderr_data)
                             raise AssertionError()
@@ -84,6 +86,7 @@ class Judge:
                         elapsed = 15
                         result = 'CE'
                         self.logger.debug("%s: compile took longer than 15 seconds" % user)
+                        error_log = 'Exceeded max time allowed (15 seconds) for compiling.'
                         with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
                             out_file.write("Exceeded max time allowed (15 seconds) for compiling.")
                         raise AssertionError()
@@ -148,7 +151,7 @@ class Judge:
                 self.logger.error("%s: %s" % (user, traceback.format_exception(*sys.exc_info())))
                 result = 'JE'
             self.logger.info("%s: result for submission %d is %s" % (user, subm_id, Contest.verdicts[result]))
-            self.contest.change_submission(subm_id, result=result, run_time=elapsed)
+            self.contest.change_submission(subm_id, result=result, run_time=elapsed, error_log=error_log)
             self.queue.task_done()
 
             subprocess32.call('chdir "%s"; rm -f *.class; rm -f a.out' % log['path'], shell=True)
