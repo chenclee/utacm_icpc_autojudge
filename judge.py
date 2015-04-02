@@ -194,7 +194,7 @@ class Judge:
         if lang not in Judge.lang_run:
             self.logger.warn("Invalid language for source code: '%s'" % lang)
             return (False, "Invalid language choice: '%s'" % (lang,))
-        elif not re.match(r'^[0-9a-z-_\.+]+$', source_name):
+        elif not re.match(r'^[0-9a-zA-Z-_\.+]+$', source_name):
             self.logger.warn("Invalid filename for source code: '%s'" % source_name)
             return (False, "Invalid filename for source code: '%s'" % (source_name,))
         elif self.in_queue[user_id] > 2:
