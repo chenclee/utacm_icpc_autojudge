@@ -7,6 +7,7 @@ import sets
 
 class Contest:
     verdicts = {'QU': 'In Queue',
+                'CJ': 'Judging',
                 'CE': 'Compile Error',
                 'AC': 'Accepted',
                 'WA': 'Wrong Answer',
@@ -126,6 +127,7 @@ class Contest:
             prob_id - problem id of submission
             submit_time - minute into contest of submission
             result - 'QU': In Queue
+                     'CJ': Judging
                      'CE': Compile Error
                      'JE': Judge System Error
 
@@ -145,7 +147,7 @@ class Contest:
                                      'run_time': 0.0,
                                      'result': result}
         self.logger.debug("submission: " + str(self.submissions[subm_id]))
-        if result not in ('QU', 'CE', 'JE'):
+        if result not in ('QU', 'CJ', 'CE', 'JE'):
             self.update_scoreboard()
         return subm_id
 
@@ -180,7 +182,7 @@ class Contest:
                     points[u]['penalty'] += points[u]['accum'][s['prob_id']]
                     points[u]['penalty'] += s['submit_time']
                     points[u]['accum'][s['prob_id']] = -1
-                elif s['result'] not in ('QU', 'CE', 'JE'):
+                elif s['result'] not in ('QU', 'CJ', 'CE', 'JE'):
                     points[u]['solved'][s['prob_id']][1] += 1
                     points[u]['accum'][s['prob_id']] += self.penalty
 
