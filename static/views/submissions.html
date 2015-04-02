@@ -16,7 +16,14 @@
             <tr ng-repeat="entry in submissions">
                 <td>{{entry['subm_id']}}</td>
                 <td>{{entry['prob_id']}}</td>
-                <td>{{verdicts[entry['result']]}}</td>
+                <td>
+                  <span ng-show="entry['result'] == 'CE'">
+                    <a ng-href="/api/v1/errors/{{entry['subm_id']}}" target="_blank">{{verdicts[entry['result']]}}</a>
+                  </span>
+                  <span ng-show="entry['result'] != 'CE'">
+                    {{verdicts[entry['result']]}}
+                  </span>
+                </td>
                 <td>{{entry['lang']}}</td>
                 <td>{{entry['run_time'] | number:3}}</td>
                 <td>{{entry['submit_time'] | number:0}} minute(s) in</td>
