@@ -108,7 +108,7 @@ class MetadataHandler(BaseHandler):
             'prob_contents': {prob_id: problems[prob_id].content
                               for prob_id in contest_cfg['prob_ids']},
             'verdicts': Contest.verdicts,
-            'solved': contest.get_submissions(self.current_user_id())
+            'solved': contest.get_solved(self.current_user_id())
         }
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(data))
@@ -182,9 +182,16 @@ class LogHandler(BaseHandler):
     def get(self, value):
         if not self.is_admin():
             raise web.HTTPError(404)
-        # TODO: send all logs
-        self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(True))
+        self.set_header('Content-Type', 'text/html')
+        self.write("<pre>")
+        try:
+            server_log_path = os.path.join(options.contest_dir, "server_log.txt")
+            with open(server_log_path, 'r') as in_file:
+                lines = [line for line in in_file.readlines() if all([v in line for v in value.split('/')])]
+                self.write(''.join(lines))
+        except:
+            self.write("unable to read log")
+        self.write("</pre>")
 
 
 class AdminHandler(BaseHandler):
@@ -224,11 +231,13 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
 
     def rejudge(self):
+        self.clear_cache()
         judge.rejudge_all()
         self.write(json.dumps(True))
 
     def clear_cache(self):
-        (prob.clear() for prob in problems.values())
+        for prob in problems.values():
+            prob.reload_files()
 
     def change_state(self):
         new_state = ''
@@ -356,7 +365,7 @@ if __name__ == '__main__':
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         static_path=os.path.join(os.path.dirname(__file__), 'static'),
         xsrf_cookies=True,
-        debug=True,
+        debug=False,
         google_redirect_url=options.redirect_url,
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
     )
@@ -365,6 +374,8 @@ if __name__ == '__main__':
         port=options.port,
         max_buffer_size=128*1024,
     )
+
+    signal.signal(signal.SIGUSR1, lambda x, y: judge.halt_judging())
 
     logger.info("Setup complete, starting IOLoop")
     try:
