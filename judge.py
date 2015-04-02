@@ -155,7 +155,8 @@ class Judge:
                 result = 'JE'
             self.logger.info("%s: result for submission %d is %s" % (user, subm_id, Contest.verdicts[result]))
             self.contest.change_submission(subm_id, result=result, run_time=elapsed, error_log=error_log)
-            self.in_queue[user_id] -= 1
+            if user_id:
+                self.in_queue[user_id] -= 1
             self.queue.task_done()
 
             subprocess32.call('chdir "%s"; rm -f *.class; rm -f a.out' % log['path'], shell=True)
@@ -197,10 +198,11 @@ class Judge:
         elif not re.match(r'^[0-9a-zA-Z-_\.+]+$', source_name):
             self.logger.warn("Invalid filename for source code: '%s'" % source_name)
             return (False, "Invalid filename for source code: '%s'" % (source_name,))
-        elif self.in_queue[user_id] > 2:
+        elif self.in_queue[user_id] > 1:
             self.logger.warn("Too many concurrent submissions.")
             return (False, "Too many concurrent submissions. Please wait until your other"
                     " submissions are judged.")
+        self.in_queue[user_id] += 1
         submit_time = (int(time.time()) - self.contest.start_time) / 60
         subm_id = self.contest.add_submission(user_id, prob_id, lang, submit_time)
         path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id))
@@ -219,7 +221,6 @@ class Judge:
                    "source_name": source_name}
             out_file.write("%s\n" % (log.__repr__(),))
         self.queue.put((subm_id, log))
-        self.in_queue[user_id] += 1
         return (True, "Success")
 
     def rejudge_all(self):
