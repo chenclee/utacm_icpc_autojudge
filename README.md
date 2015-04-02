@@ -12,3 +12,7 @@ docker-sandbox How-To:
 
 Running Sample Contest:
 sudo python server.py --admin_whitelist='admin@example.com' --contest_dir='sample_contest' --delay=15 --port=8001 --client_id='YOUR_CLIENT_ID' --client_secret='YOUR_CLIENT_SECRET' --redirect_url='http://localhost:8001/auth/login'
+
+Prevent Fork Bombs:
+1) Open /etc/init/docker.conf
+2) Change nproc to "limit nproc 16 160"
