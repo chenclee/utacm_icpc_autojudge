@@ -121,8 +121,8 @@ class UpdatesHandler(BaseHandler):
         if contest.is_running() or contest.is_over():
             updates['scoreboard'] = contest.get_scoreboard(live=self.is_admin())
             updates['solved'] = contest.get_solved(self.current_user_id())
-            updates['submissions'] = contest.get_submissions(self.current_user_id())
-            updates['clarifications'] = contest.get_clarifs(self.current_user_id())
+            updates['submissions'] = contest.get_submissions(self.current_user_id(), is_admin=self.is_admin())
+            updates['clarifications'] = contest.get_clarifs(self.current_user_id(), is_admin=self.is_admin())
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(updates))
 

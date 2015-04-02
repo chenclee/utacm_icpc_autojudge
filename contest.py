@@ -90,14 +90,14 @@ class Contest:
         """
         return self.scoreboard if not self.frozen or live else self.scoreboard_copy
 
-    def get_submissions(self, user_id):
+    def get_submissions(self, user_id, is_admin=True):
         """Returns all submissions made by user_id sorted by submission time.
 
         Parameters:
             user_id - user id
         """
         return [self.submissions[subm_id] for subm_id in xrange(self.next_subm_id - 1, -1, -1)
-                if self.submissions[subm_id]['user_id'] == user_id]
+                if self.submissions[subm_id]['user_id'] == user_id or is_admin]
 
     def get_solved(self, user_id):
         """Returns whether each problem has been solved.
@@ -204,7 +204,7 @@ class Contest:
         self.submissions = {}
         self.scoreboard = []
 
-    def get_clarifs(self, user_id):
+    def get_clarifs(self, user_id, is_admin=False):
         """Gets the clarifications/responses for a user.
 
         Parameters:
@@ -212,7 +212,7 @@ class Contest:
         """
         if user_id == -1:
             return tuple(self.clarifs)
-        return tuple(c for c in self.clarifs if not c['private'] or c['user_id'] == user_id)
+        return tuple(c for c in self.clarifs if not c['private'] or c['user_id'] == user_id or is_admin)
 
     def submit_clarif(self, user_id, prob_id, message):
         """Submits a clarification request.
