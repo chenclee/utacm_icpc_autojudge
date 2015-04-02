@@ -1,7 +1,6 @@
 {
-  'time_limit': 1,
-  'mem_limit': 256,
-  'output_limit': 10000,
+  'time_limit': 3,
+  'mem_limit': 64,
   'inputs': ['input1.txt', 'input2.txt', 'input3.txt'],
   'outputs': ['output1.txt', 'output2.txt', 'output3.txt'],
 }

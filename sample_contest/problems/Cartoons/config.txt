@@ -1,5 +1,5 @@
 {
-  'time_limit': 2,
+  'time_limit': 10,
   'mem_limit': 256,
   'inputs': ['input1.txt', 'input2.txt', 'input3.txt'],
   'outputs': ['output1.txt', 'output2.txt', 'output3.txt'],
