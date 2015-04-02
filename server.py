@@ -21,10 +21,6 @@ define('client_id',
        help='Google OAuth2 Client ID', type=str)
 define('client_secret',
        help='Google OAuth2 Client Secret', type=str)
-define('certfile',
-       help='Path to SSL Cert file', type=str)
-define('keyfile',
-       help='Path to SSL Key file', type=str)
 define('admin_whitelist',
        help='emails of admins', type=str, multiple=True)
 define('port', default=8000,
@@ -397,12 +393,7 @@ if __name__ == '__main__':
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
     )
 
-    https_server = httpserver.HTTPServer(
-            application,
-            ssl_options={'certfile': options.certfile, 'keyfile': options.keyfile,}
-    )
-
-    https_server.listen(
+    application.listen(
         port=options.port,
         max_buffer_size=40*1024,
     )
