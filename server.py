@@ -207,7 +207,8 @@ class LogHandler(BaseHandler):
         try:
             server_log_path = os.path.join(options.contest_dir, "server_log.txt")
             with open(server_log_path, 'r') as in_file:
-                lines = [line for line in in_file.readlines() if all([v in line for v in value.split('/')])]
+                lines = [line.decode('utf-8') for line in in_file.readlines()]
+                lines = [line for line in lines if all([v in line for v in value.split('/')])]
                 self.write(''.join(lines))
         except:
             logger.error("unable to read log: %s" % (traceback.format_exception(*sys.exc_info()),))
