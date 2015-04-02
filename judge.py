@@ -36,6 +36,7 @@ class Judge:
         self.problems = problems
         self.contest_dir = contest_dir
         self.queue = Queue.Queue()
+        self.in_queue = {}
         self.logger = logger
 
         self.subm_dir = os.path.join(contest_dir, 'submissions')
@@ -58,12 +59,14 @@ class Judge:
         while self.judging:
             result = 'JE'
             elapsed = 0.0
+            user_id = None
             try:
                 subm_id, log = self.queue.get(timeout=1)
                 self.logger.info("%s: judging submission %d (%s, %s, %s, %s)" %
                         (user, subm_id, log['prob_id'], log['source_name'], log['lang'], log['user_id']))
                 self.logger.debug("%s: log=%s" % (user, str(log)))
                 self.contest.change_submission(subm_id, result='CJ')
+                user_id = log['user_id']
 
                 error_log = None
                 if log['lang'] in Judge.lang_compile:
@@ -152,6 +155,7 @@ class Judge:
                 result = 'JE'
             self.logger.info("%s: result for submission %d is %s" % (user, subm_id, Contest.verdicts[result]))
             self.contest.change_submission(subm_id, result=result, run_time=elapsed, error_log=error_log)
+            self.in_queue[user_id] -= 1
             self.queue.task_done()
 
             subprocess32.call('chdir "%s"; rm -f *.class; rm -f a.out' % log['path'], shell=True)
@@ -179,15 +183,24 @@ class Judge:
             source_name - name of the source code file
             source - source code
 
-        return - true if output was correct and false otherwise
+        Returns:
+            tuple with first argument being if submission was successfully queued
+            and second argument being error message if not successful
+            
         """
         # add submission to judging queue
+        if user_id not in self.in_queue:
+            self.in_queue[user_id] = 0
         if lang not in Judge.lang_run:
             self.logger.warn("Invalid language for source code: '%s'" % lang)
-            return False
+            return (False, "Invalid language choice: '%s'" % (lang,))
         elif not re.match(r'^[0-9a-z-_\.+]+$', source_name):
             self.logger.warn("Invalid filename for source code: '%s'" % source_name)
-            return False
+            return (False, "Invalid filename for source code: '%s'" % (source_name,))
+        elif self.in_queue[user_id] > 2:
+            self.logger.warn("Too many concurrent submissions.")
+            return (False, "Too many concurrent submissions. Please wait until your other"
+                    " submissions are judged.")
         submit_time = (int(time.time()) - self.contest.start_time) / 60
         subm_id = self.contest.add_submission(user_id, prob_id, lang, submit_time)
         path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id))
@@ -206,7 +219,8 @@ class Judge:
                    "source_name": source_name}
             out_file.write("%s\n" % (log.__repr__(),))
         self.queue.put((subm_id, log))
-        return True
+        self.in_queue[user_id] += 1
+        return (True, "Success")
 
     def rejudge_all(self):
         """Regrade all submissions"""
@@ -224,6 +238,9 @@ class Judge:
                     log = eval(line)
                     subm_id = self.contest.add_submission(
                             log['user_id'], log['prob_id'], log['lang'], log['submit_time'])
+                    if log['user_id'] not in self.in_queue:
+                        self.in_queue[log['user_id']] = 0
+                    self.in_queue[log['user_id']] += 1
                     self.queue.put((subm_id, log))
                 except Exception as e:
                     print "Unable to parse log line:", e

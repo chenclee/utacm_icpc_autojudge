@@ -151,11 +151,11 @@ class SubmitSolutionHandler(BaseHandler):
 
         logger.info('%s requests judgement for a submission (%s, %s, %s)' %
                 (self.current_user_pretty(), filename, lang, prob_id))
-        result = judge.enqueue_submission(user_id, prob_id, lang, filename, source)
+        result, err = judge.enqueue_submission(user_id, prob_id, lang, filename, source)
         logger.info('Submission successfully added to judge queue' if result else
                 'Failed to add to judge queue')
         self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(result))
+        self.write(json.dumps((result, err)))
 
 
 class SubmitClarificationHandler(BaseHandler):
