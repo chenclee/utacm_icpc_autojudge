@@ -90,7 +90,7 @@ class Contest:
         """
         return self.scoreboard if not self.frozen or live else self.scoreboard_copy
 
-    def get_submissions(self, user_id, is_admin=True):
+    def get_submissions(self, user_id, is_admin=False):
         """Returns all submissions made by user_id sorted by submission time.
 
         Parameters:
@@ -112,9 +112,12 @@ class Contest:
         return solved
 
     def get_error_log(self, user_id, subm_id, is_admin=False):
-        if subm_id in self.submissions and (
-                self.submissions[subm_id]['user_id'] == user_id or is_admin):
-            return self.submissions[subm_id]['error_log']
+        try:
+            if subm_id in self.submissions and (
+                    self.submissions[subm_id]['user_id'] == user_id or is_admin):
+                return self.submissions[subm_id]['error_log']
+        except:
+            return None
         return None
 
     def add_submission(self, user_id, prob_id, lang, submit_time, result='QU'):
