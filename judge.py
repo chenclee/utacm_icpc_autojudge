@@ -78,7 +78,6 @@ class Judge:
                         if compiler.returncode != 0:
                             result = 'CE'
                             self.logger.debug("%s: compile returned non-zero exit status" % user)
-                            self.logger.debug("%s: %s" % (user, stderr_data))
                             error_log = stderr_data
                             with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
                                 out_file.write(stderr_data)
@@ -114,8 +113,6 @@ class Judge:
                             input=prob.input_text, timeout=(prob.time_limit * 4))
                     regex = re.compile("(\d+\.\d{2})")
                     if runner.returncode != 0:
-                        self.logger.debug("%s: %s" % (user, stdout_data))
-                        self.logger.debug("%s: %s" % (user, stderr_data))
                         result = 'RE' if stderr_data.splitlines()[0].strip() != 'Command terminated by signal 9' else 'ML'
                         with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
                             out_file.write(stderr_data)
