@@ -93,16 +93,31 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
       sync();
       $interval(sync, 10000);
 
-      $scope.rejudgeProblem = function(problemId) {
+      $scope.rejudge = function() {
         submit_url = 'api/v1/admin/rejudge';
-        submit_data = { '_xsrf': $cookies._xsrf, 'probId': problemId };
+        submit_data = { '_xsrf': $cookies._xsrf };
         $http({
           method  : 'POST',
           url     : submit_url,
           data    : $.param(submit_data),
           headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).success(function(data) {
-          $window.alert("Rejudging problem " + problemId);
+          $window.alert("Rejudging all submissions...");
+        });
+      }
+
+      $scope.processOverrideResultForm = function(subm_id, result) {
+        submit_url = 'api/v1/admin/override';
+        submit_data = { '_xsrf': $cookies._xsrf, 'subm_id': subm_id, 'result': result };
+        $http({
+          method  : 'POST',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          $scope.overrideSubmIdTextBox = null;
+          $scope.overrideResultTextBox = null;
+          $rootScope.syncUpdates();
         });
       }
 

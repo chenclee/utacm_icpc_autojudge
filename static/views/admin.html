@@ -117,21 +117,17 @@
     </div>
     <div role="tabpanel" ng-class="getTabPaneClass(3)" id="rejudging">
         <div class="panel panel-default">
-            <div class="panel-heading">Rejudge Problem</div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Problem Name</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="probId in probIds">
-                        <td>{{probId}}</td>
-                        <td><button type="submit" class="btn btn-danger" ng-click="rejudgeProblem(probIds[$index])">Rejudge</button></td>
-                    </tr>
-                </tbody>
-            </table>
+            <label>Rejudge/Recover All Submissions:</label>
+            <button type="submit" class="btn btn-danger" ng-click="rejudge()">Rejudge</button>
+            
+            <form name="overrideResultForm">
+                <label>Override Result</label>
+                <br>
+                <input type="number" ng-model="overrideSubmIdTextBox" placeholder="Submission ID">
+                <input type="text" ng-model="overrideResultTextBox" placeholder="Result">
+                <button type="submit" class="btn btn-primary"
+                    ng-click="processOverrideResultForm(overrideSubmIdTextBox, overrideResultTextBox)">Submit</button>
+            </form>
         </div>
     </div>  
 </div>
