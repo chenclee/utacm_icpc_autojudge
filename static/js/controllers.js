@@ -319,7 +319,7 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
         if ($scope.solved[probIds[tabNum - 1]]) {
             return tabClasses[tabNum] + " panel-success";
         } else if ($rootScope.activeTab == tabNum) {
-            return tabClasses[tabNum] + " panel-primary";
+            return tabClasses[tabNum] + " panel-info";
         }
       };
       
