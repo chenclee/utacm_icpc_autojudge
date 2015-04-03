@@ -249,6 +249,8 @@ class AdminHandler(BaseHandler):
             self.respond_to_clarification()
         elif put_type == 'clarification':
             self.post_global_clarification()
+        elif put_type == 'override':
+            self.override_result()
         else:
             raise web.HTTPError(400)
 
@@ -272,6 +274,16 @@ class AdminHandler(BaseHandler):
         else:
             contest.freeze_scoreboard(True)
         self.write(json.dumps(True))
+
+    def override_result(self):
+        try:
+            subm_id = int(self.get_argument('subm_id'))
+            result = self.get_argument('result')
+            if result in Contest.verdicts:
+                contest.change_submission(subm_id, result)
+            self.write(json.dumps(True))
+        except:
+            raise web.HTTPError(400)
 
     def add_to_whitelist(self):
         newAdmin = ''

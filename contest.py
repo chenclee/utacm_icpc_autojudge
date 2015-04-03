@@ -167,6 +167,8 @@ class Contest:
             subm_id - id of the submission to change.
             result - see #add_submission(...) for valid results
         """
+        if subm_id not in self.submissions or result not in Contest.verdicts:
+            return
         self.submissions[subm_id]['result'] = result
         self.submissions[subm_id]['run_time'] = run_time
         self.submissions[subm_id]['error_log'] = error_log
