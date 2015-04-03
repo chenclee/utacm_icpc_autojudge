@@ -106,6 +106,19 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
         });
       }
 
+      $scope.clear_cache = function() {
+        submit_url = 'api/v1/admin/clear';
+        submit_data = { '_xsrf': $cookies._xsrf };
+        $http({
+          method  : 'POST',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          $window.alert("Refreshing problem cache...");
+        });
+      }
+
       $scope.processOverrideResultForm = function(subm_id, result) {
         submit_url = 'api/v1/admin/override';
         submit_data = { '_xsrf': $cookies._xsrf, 'subm_id': subm_id, 'result': result };

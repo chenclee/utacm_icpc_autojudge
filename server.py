@@ -260,13 +260,15 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
 
     def rejudge(self):
-        self.clear_cache()
+        for prob in problems.values():
+            prob.reload_files()
         judge.rejudge_all()
         self.write(json.dumps(True))
 
     def clear_cache(self):
         for prob in problems.values():
             prob.reload_files()
+        self.write(json.dumps(True))
 
     def change_state(self):
         new_state = ''
