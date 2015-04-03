@@ -116,19 +116,18 @@
         </div>
     </div>
     <div role="tabpanel" ng-class="getTabPaneClass(3)" id="rejudging">
-        <div class="panel panel-default">
-            <label>Rejudge/Recover All Submissions:</label>
-            <button type="submit" class="btn btn-danger" ng-click="rejudge()">Rejudge</button>
-            
-            <form name="overrideResultForm">
-                <label>Override Result</label>
-                <br>
-                <input type="number" ng-model="overrideSubmIdTextBox" placeholder="Submission ID">
-                <input type="text" ng-model="overrideResultTextBox" placeholder="Result">
-                <button type="submit" class="btn btn-primary"
-                    ng-click="processOverrideResultForm(overrideSubmIdTextBox, overrideResultTextBox)">Submit</button>
-            </form>
-        </div>
+        <label>Rejudge/Recover All Submissions:</label>
+        <br>
+        <button type="submit" class="btn btn-danger" ng-click="rejudge()">Rejudge</button>
+        
+        <form name="overrideResultForm">
+            <label>Override Judging Result:</label>
+            <br>
+            <input type="number" ng-model="overrideSubmIdTextBox" placeholder="Submission ID">
+            <input type="text" ng-model="overrideResultTextBox" placeholder="Result">
+            <button type="submit" class="btn btn-primary"
+                ng-click="processOverrideResultForm(overrideSubmIdTextBox, overrideResultTextBox)">Submit</button>
+        </form>
     </div>  
 </div>
 
