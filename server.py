@@ -29,6 +29,8 @@ define('contest_dir', default='contest',
        help='path to the contest files', type=str)
 define('delay', default=15*60,
        help='delay (in seconds) before starting the contest', type=int)
+define('admin_only', default=False,
+       help='only allow admins to view site', type=bool)
 
 
 class BaseHandler(web.RequestHandler):
@@ -67,6 +69,9 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
                 raise web.HTTPError(500, 'Google authentication failed')
 
             user = json.loads(response.body)
+            if options.admin_only and user['email'] not in options.admin_whitelist:
+                logger.warn("%s (%s) attempted to sign in (admin only mode)" % (user["name"], user["email"]))
+                raise web.HTTPError(403, 'Contest is running in admin only mode.')
             self.set_secure_cookie('utacm_contest_user', escape.json_encode(user), expires_days=1)
             logger.info("%s (%s) signed in" % (user["name"], user["email"]))
             self.redirect('/')
