@@ -126,9 +126,8 @@ class Judge:
                         if runner.returncode != 0:
                             if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
                                 stderr_lines = stderr_lines[:-1]
-                            else:
-                                result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
-                                raise AssertionError()
+                            result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
+                            raise AssertionError()
                         time_matches = [re.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
                         elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
                         if elapsed > prob.time_limit:
