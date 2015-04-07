@@ -108,7 +108,7 @@ class Judge:
                 try:
                     ran_to_completion = True
                     def timeout_func():
-                        self.logger.debug("%s: inside timeout_func" % (user,))
+                        nonlocal ran_to_completion
                         runner.kill()
                         ran_to_completion = False
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
