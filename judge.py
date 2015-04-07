@@ -31,7 +31,7 @@ class Judge:
                 'Python 3.4': ['python3']
     }
 
-    def __init__(self, contest, problems, contest_dir, logger):
+    def __init__(self, contest, problems, contest_dir, num_judges, logger):
         self.contest = contest
         self.problems = problems
         self.contest_dir = contest_dir
