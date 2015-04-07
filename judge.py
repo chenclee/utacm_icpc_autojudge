@@ -122,8 +122,8 @@ class Judge:
 
                     if ran_to_completion:
                         self.logger.debug("%s: program ran to completion" % (user,))
+                        stderr_lines = stderr_data.splitlines()
                         if runner.returncode != 0:
-                            stderr_lines = stderr_data.splitlines()
                             if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
                                 stderr_lines = stderr_lines[:-1]
                             else:
