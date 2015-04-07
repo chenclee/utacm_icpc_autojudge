@@ -78,7 +78,7 @@ class Judge:
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
                     compiler = subprocess32.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess32.PIPE)
                     try:
-                        stderr_data = compiler.communicate(timeout=15)[1]
+                        stderr_data = compiler.communicate(timeout=60)[1]
                         if compiler.returncode != 0:
                             result = 'CE'
                             self.logger.debug("%s: compile returned non-zero exit status" % user)
