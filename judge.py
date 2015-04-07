@@ -117,13 +117,13 @@ class Judge:
                     self.logger.debug("%s: finished communicating" % (user,))
                     regex = re.compile("(\d+\.\d{2})")
                     stderr_lines = stderr_data.splitlines()
+                    with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
+                        out_file.write(stderr_data)
                     if runner.returncode != 0:
                         if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
                             stderr_lines = stderr_lines[:-1]
                         else:
                             result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
-                            with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
-                                out_file.write(stderr_data)
                             raise AssertionError()
                     time_matches = [regex.search(s) for s in stderr_lines[-2:]]
                     elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
