@@ -129,7 +129,7 @@ class Judge:
                             else:
                                 result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
                                 raise AssertionError()
-                        time_matches = [regex.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
+                        time_matches = [re.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
                         elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
                         if elapsed > prob.time_limit:
                             self.logger.debug("%s: user+sys time exceeds time limit" % (user,))
