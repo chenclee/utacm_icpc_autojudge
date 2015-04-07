@@ -106,15 +106,15 @@ class Judge:
                 runner = subprocess.Popen(shlex.split(' '.join(docker_cmd)),
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 try:
-                    ran_to_completion = True
+                    ran_to_completion = [True]
                     def timeout_func():
-                        nonlocal ran_to_completion
+                        ran_to_completion[0] = False
                         runner.kill()
-                        ran_to_completion = False
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
                     timer.start()
                     stdout_data, stderr_data = runner.communicate(input=prob.input_text)
                     timer.cancel()
+                    ran_to_completion = ran_to_completion[0]
 
                     with open(os.path.join(log['path'], 'runtime_output.txt'), 'w') as out_file:
                         out_file.write(stdout_data)
