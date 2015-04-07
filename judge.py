@@ -110,6 +110,7 @@ class Judge:
                     def timeout_func():
                         ran_to_completion[0] = False
                         runner.kill()
+                        runner.communicate()
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
                     timer.start()
                     stdout_data, stderr_data = runner.communicate(input=prob.input_text)
