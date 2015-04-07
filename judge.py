@@ -50,15 +50,6 @@ class Judge:
         for i in xrange(num_judges):
 	    threading.Thread(target=self.judge_func, args=("judge%d" % i,)).start()
 
-        self.killer = threading.Thread(target=self.kill_func)
-        self.killer.start()
-
-    def kill_func(self):
-        while self.judging:
-            killer = subprocess32.call("docker ps | grep '[2-5][0-9] seconds ago' | awk '{print $1}' | xargs --no-run-if-empty docker kill", shell=True)
-            killer = subprocess32.call("docker ps -a | grep 'Exited' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f", shell=True)
-            time.sleep(5)
-
     def judge_func(self, user):
         while self.judging:
             result = 'JE'
@@ -78,7 +69,7 @@ class Judge:
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
                     compiler = subprocess32.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess32.PIPE)
                     try:
-                        stderr_data = compiler.communicate(timeout=60)[1]
+                        stderr_data = compiler.communicate(timeout=15)[1]
                         if compiler.returncode != 0:
                             result = 'CE'
                             self.logger.debug("%s: compile returned non-zero exit status" % user)
@@ -112,8 +103,10 @@ class Judge:
                 runner = subprocess32.Popen(' '.join(docker_cmd), shell=True,
                         stdin=subprocess32.PIPE, stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
                 self.logger.debug("%s: finished Popen, now attempting to communicate with child" % (user,))
+                finished = False
                 try:
-                    stdout_data, stderr_data = runner.communicate(input=prob.input_text)
+                    stdout_data, stderr_data = runner.communicate(
+                            input=prob.input_text, timeout=(prob.time_limit * 4))
                     self.logger.debug("%s: finished communicating" % (user,))
                     regex = re.compile("(\d+\.\d{2})")
                     stderr_lines = stderr_data.splitlines()
@@ -128,6 +121,7 @@ class Judge:
                     time_matches = [regex.search(s) for s in stderr_lines[-2:]]
                     elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
                     if elapsed > prob.time_limit:
+                        finished = True
                         self.logger.debug(user + ": program ran to completion but user+sys time exceeds time limit.")
                         raise subprocess32.TimeoutExpired(
                                 cmd=' '.join(docker_cmd),
@@ -144,6 +138,9 @@ class Judge:
                     else:
                         result = 'WA'
                 except subprocess32.TimeoutExpired:
+                    if not finished:
+                        runner.kill()
+                        runner.communicate()
                     elapsed = self.problems[log['prob_id']].time_limit
                     result = 'TL'
                     raise AssertionError()
