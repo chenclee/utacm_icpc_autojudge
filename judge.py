@@ -69,7 +69,7 @@ class Judge:
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
                     compiler = subprocess32.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess32.PIPE)
                     try:
-                        stderr_data = compiler.communicate(timeout=15)[1]
+                        stderr_data = compiler.communicate(timeout=60)[1]
                         if compiler.returncode != 0:
                             result = 'CE'
                             self.logger.debug("%s: compile returned non-zero exit status" % user)
@@ -80,12 +80,12 @@ class Judge:
                     except subprocess32.TimeoutExpired:
                         compiler.kill()
                         compiler.communicate()
-                        elapsed = 15
+                        elapsed = 60
                         result = 'CE'
-                        self.logger.debug("%s: compile took longer than 15 seconds" % user)
-                        error_log = 'Exceeded max time allowed (15 seconds) for compiling.'
+                        self.logger.debug("%s: compile took longer than 60 seconds" % user)
+                        error_log = 'Exceeded max time allowed (60 seconds) for compiling.'
                         with open(os.path.join(log['path'], 'compile_errors.txt'), 'w') as out_file:
-                            out_file.write("Exceeded max time allowed (15 seconds) for compiling.")
+                            out_file.write("Exceeded max time allowed (60 seconds) for compiling.")
                         raise AssertionError()
                 prob = self.problems[log['prob_id']]
                 run_cmd = ['time', '--portability'] + Judge.lang_run[log['lang']]
