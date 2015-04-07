@@ -31,6 +31,10 @@ define('delay', default=15*60,
        help='delay (in seconds) before starting the contest', type=int)
 define('admin_only', default=False,
        help='only allow admins to view site', type=bool)
+define('minutes_in', default=0,
+       help='minutes into the contest', type=int)
+define('num_judges', default=4,
+       help='number of judge threads', type=int)
 
 
 class BaseHandler(web.RequestHandler):
@@ -384,9 +388,9 @@ if __name__ == '__main__':
 
     problems = {prob_id: Problem(prob_id, options.contest_dir, logger)
                         for prob_id in contest_cfg['prob_ids']}
-    contest = Contest(options.delay, contest_cfg['duration'],
+    contest = Contest(options.delay, contest_cfg['duration'], options.minutes_in,
                       contest_cfg['prob_ids'], contest_cfg['penalty'], logger)
-    judge = Judge(contest, problems, options.contest_dir, logger)
+    judge = Judge(contest, problems, options.contest_dir, options.num_judges, logger)
 
     application = web.Application(
         [

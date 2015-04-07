@@ -42,8 +42,12 @@ class Judge:
         self.subm_dir = os.path.join(contest_dir, 'submissions')
         self.log_path = os.path.join(self.subm_dir, 'log.txt')
 
+        if num_judges < 1:
+            num_judges = 1
+        elif num_judges > 10:
+            num_judges = 10
         self.judging = True
-        for i in xrange(4):
+        for i in xrange(num_judges):
 	    threading.Thread(target=self.judge_func, args=("judge%d" % i,)).start()
 
         self.killer = threading.Thread(target=self.kill_func)
@@ -107,17 +111,23 @@ class Judge:
                 self.logger.debug("%s: %s: " % (user, ' '.join(docker_cmd)))
                 runner = subprocess32.Popen(' '.join(docker_cmd), shell=True,
                         stdin=subprocess32.PIPE, stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
+                self.logger.debug("%s: finished Popen, now attempting to communicate with child" % (user,))
                 finished = False
                 try:
                     stdout_data, stderr_data = runner.communicate(
                             input=prob.input_text, timeout=(prob.time_limit * 4))
+                    self.logger.debug("%s: finished communicating" % (user,))
                     regex = re.compile("(\d+\.\d{2})")
+                    stderr_lines = stderr_data.splitlines()
                     if runner.returncode != 0:
-                        result = 'RE' if stderr_data.splitlines()[0].strip() != 'Command terminated by signal 9' else 'ML'
-                        with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
-                            out_file.write(stderr_data)
-                        raise AssertionError()
-                    time_matches = [regex.search(s) for s in stderr_data.splitlines()[-2:]]
+                        if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
+                            stderr_lines = stderr_lines[:-1]
+                        else:
+                            result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
+                            with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
+                                out_file.write(stderr_data)
+                            raise AssertionError()
+                    time_matches = [regex.search(s) for s in stderr_lines[-2:]]
                     elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
                     if elapsed > prob.time_limit:
                         finished = True

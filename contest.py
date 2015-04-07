@@ -16,7 +16,7 @@ class Contest:
                 'ML': 'Memory Limit Exceeded',
                 'JE': 'Judging System Error'}
 
-    def __init__(self, delay, duration, prob_ids, penalty, logger):
+    def __init__(self, delay, duration, minutes_in, prob_ids, penalty, logger):
         """Initializes the contest.
 
         Parameter:
@@ -26,7 +26,7 @@ class Contest:
         """
         assert delay >= 0
         assert duration >= 0
-        self.init_time = int(time.time())
+        self.init_time = int(time.time()) - (60 * minutes_in)
         self.start_time = self.init_time + delay
         self.end_time = self.start_time + duration
         self.prob_ids = prob_ids
