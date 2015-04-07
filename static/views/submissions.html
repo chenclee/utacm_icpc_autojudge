@@ -5,6 +5,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Constestant</th>
                 <th>Problem</th>
                 <th>Verdict</th>
                 <th>Language</th>
@@ -14,6 +15,7 @@
         </thead>
         <tbody class="table-hover">
             <tr ng-repeat="entry in submissions">
+                <td>{{entry['user_id'][1]}}</td>
                 <td>{{entry['subm_id']}}</td>
                 <td>{{entry['prob_id']}}</td>
                 <td>
