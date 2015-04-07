@@ -15,8 +15,8 @@
         </thead>
         <tbody class="table-hover">
             <tr ng-repeat="entry in submissions">
-                <td>{{entry['user_id'][1]}}</td>
                 <td>{{entry['subm_id']}}</td>
+                <td>{{entry['user_id'][1]}}</td>
                 <td>{{entry['prob_id']}}</td>
                 <td>
                   <span ng-show="entry['result'] == 'CE'">
