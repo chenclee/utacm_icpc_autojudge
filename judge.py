@@ -103,7 +103,7 @@ class Judge:
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
                 docker_cmd = ['docker', 'run', '-i',
-                        #'--cpu-shares=256',
+                        '--cpu-shares=128',
                         '-m="%dm"' % (prob.mem_limit,), '--read-only',
                         '-v', '"%s":/judging_dir:ro' % (os.path.abspath(log['path']),), '-w', '/judging_dir',
                         '-u', user, 'chenclee/sandbox',
