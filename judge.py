@@ -49,7 +49,7 @@ class Judge:
             num_judges = 10
         self.judging = True
         for i in xrange(num_judges):
-	    threading.Thread(target=self.judge_func, args=("judge%d" % i,)).start()
+            threading.Thread(target=self.judge_func, args=("judge%d" % i,)).start()
 
     def judge_func(self, user):
         while self.judging:
