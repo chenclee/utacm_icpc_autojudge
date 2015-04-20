@@ -111,7 +111,7 @@ class Judge:
                 try:
                     ran_to_completion = [True]
                     def timeout_func():
-                        subprocess.call('docker rm -f %s' % (docker_name,))
+                        subprocess.call('docker rm -f %s' % (docker_name,), shell=True)
                         ran_to_completion[0] = False
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
                     timer.start()
