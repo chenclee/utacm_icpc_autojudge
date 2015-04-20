@@ -95,7 +95,10 @@ class Judge:
                     run_cmd.append(log['source_name'][:-5])
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
-                docker_cmd = ['docker', 'run', '-i', '--rm=true',
+                docker_name = str(uuid.uuid4())
+                docker_cmd = ['docker', 'run', '-i',
+                        '--name="%s"' % (docker_name,),
+                        '--rm=true',
                         '--net="none"',
                         '--cpu-shares=128',
                         '-m="%dm"' % (prob.mem_limit,), '--read-only',
@@ -108,8 +111,8 @@ class Judge:
                 try:
                     ran_to_completion = [True]
                     def timeout_func():
+                        subprocess.call('docker rm -f %s' % (docker_name,))
                         ran_to_completion[0] = False
-                        runner.send_signal(2)
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
                     timer.start()
                     stdout_data, stderr_data = runner.communicate(input=prob.input_text)
