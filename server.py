@@ -202,7 +202,7 @@ class ErrorFileHandler(BaseHandler):
             raise web.HTTPError(404)
         self.set_header('Content-Type', 'text/html')
         self.write('<pre>')
-        self.write(str(error_log))
+        self.write(escape.xhtml_escape(str(error_log)))
         self.write('</pre>')
 
 
@@ -218,7 +218,7 @@ class LogHandler(BaseHandler):
             with open(server_log_path, 'r') as in_file:
                 lines = [line.decode('utf-8') for line in in_file.readlines()]
                 lines = [line for line in lines if all([v in line for v in value.split('/')])]
-                self.write(''.join(lines))
+                self.write(escape.xhtml_escape(''.join(lines)))
         except:
             logger.error("unable to read log: %s" % (traceback.format_exception(*sys.exc_info()),))
             self.write("unable to read log")

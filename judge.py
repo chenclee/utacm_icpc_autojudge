@@ -111,8 +111,12 @@ class Judge:
                 try:
                     ran_to_completion = [True]
                     def timeout_func():
-                        subprocess.call('docker rm -f %s' % (docker_name,), shell=True)
+                        self.logger.debug("%s: time limit exceeded; killing docker container" % (user,))
                         ran_to_completion[0] = False
+                        try:
+                            subprocess.call('docker rm -f %s' % (docker_name,), shell=True)
+                        except:
+                            pass
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
                     timer.start()
                     stdout_data, stderr_data = runner.communicate(input=prob.input_text)
