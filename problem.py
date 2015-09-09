@@ -40,16 +40,14 @@ class Problem:
                     self.logger.warn("Error reading mem_limit. Using default (64 mb)")
                     self.mem_limit = 64
                 try:
-                    self.inputs = config['inputs']
+                    judge_data = config['judge_data']
+                    self.inputs = [data[0] for data in judge_data]
+                    self.outputs = [data[1] for data in judge_data]
                     self.logger.debug("Inputs: %s" % str(self.inputs))
+                    self.logger.debug("Outputs: %s" % str(self.outputs))
                 except:
-                    self.logger.error("Error reading inputs. Using default (['input.txt'])")
+                    self.logger.error("Error reading judge_data. Using default ([('input.txt', 'output.txt')])")
                     self.inputs = ['input.txt']
-                try:
-                    self.outputs = config['outputs']
-                    self.logger.debug("outputs: %s" % str(self.outputs))
-                except:
-                    self.logger.error("Error reading outputs. Using default (['output.txt'])")
                     self.outputs = ['output.txt']
         except Exception as e:
             self.logger.warn("Error loading problem config: " + e.message)
@@ -61,10 +59,10 @@ class Problem:
             self.outputs = ['output.txt']
 
         try:
-            with open(os.path.join(self.prob_path, self.outputs[0]), 'r') as in_file:
-                self.output_text = in_file.read()
             with open(os.path.join(self.prob_path, self.inputs[0]), 'r') as in_file:
                 self.input_text = in_file.read()
+            with open(os.path.join(self.prob_path, self.outputs[0]), 'r') as in_file:
+                self.output_text = in_file.read()
         except Exception as e:
             self.critical("No input/output files found for " + self.prob_id)
             raise
