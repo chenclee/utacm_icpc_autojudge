@@ -414,6 +414,7 @@ if __name__ == '__main__':
         debug=False,
         google_redirect_url=options.redirect_url,
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
+        compiled_template_cache=False,
     )
 
     application.listen(
