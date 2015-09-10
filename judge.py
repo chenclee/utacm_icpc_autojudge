@@ -74,7 +74,7 @@ class Judge:
                 if log['lang'] in Judge.lang_compile:
                     compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
-                    compiler = subprocess.Popen('cd "%s"; %s' % (log['path'].replace('"', '\\"').replace("'", "\\'"), ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
+                    compiler = subprocess.Popen('cd "%s"; %s' % (log['path'].replace('"', '\\"'), ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
                     try:
                         stderr_data = compiler.communicate(timeout=60)[1]
                         if compiler.returncode != 0:
@@ -107,7 +107,7 @@ class Judge:
                         '--net="none"',
                         '--cpu-shares=128',
                         '-m="%dm"' % (prob.mem_limit,), '--read-only',
-                        '-v', '"%s":/judging_dir:ro' % (log['path'].replace('"', '\\"').replace("'", "\\'"),), '-w', '/judging_dir',
+                        '-v', '"%s":/judging_dir:ro' % (os.path.abspath(log['path']),), '-w', '/judging_dir',
                         '-u', user, 'chenclee/sandbox',
                         ' '.join(run_cmd)]
                 self.logger.debug("%s: %s: " % (user, ' '.join(docker_cmd)))
