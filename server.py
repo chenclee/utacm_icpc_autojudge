@@ -14,6 +14,7 @@ from contest import Contest
 from judge import Judge
 from data_uri import DataURI
 
+SRC_DIR = os.path.dirname(__file__)
 
 define('redirect_url',
        help='Google OAuth2 Redirect URL', type=str)
@@ -355,12 +356,12 @@ class AdminHandler(BaseHandler):
 
 
 def init_loggers():
-    access_log_path = os.path.join(options.contest_dir, "access_log.txt")
+    access_log_path = os.path.join(SRC_DIR, "access_log.txt")
     handler_access = logging.FileHandler(access_log_path)
     handler_access.setFormatter(log.LogFormatter())
     logging.getLogger('tornado.access').addHandler(handler_access)
 
-    server_log_path = os.path.join(options.contest_dir, "server_log.txt")
+    server_log_path = os.path.join(SRC_DIR, "server_log.txt")
     handler_server = logging.FileHandler(server_log_path)
     handler_server.setFormatter(log.LogFormatter())
     logger.addHandler(handler_server)
@@ -414,6 +415,7 @@ if __name__ == '__main__':
         debug=False,
         google_redirect_url=options.redirect_url,
         google_oauth={'key': options.client_id, 'secret': options.client_secret},
+        compiled_template_cache=False,
     )
 
     application.listen(
