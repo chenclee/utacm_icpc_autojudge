@@ -214,7 +214,7 @@ class LogHandler(BaseHandler):
         self.set_header('Content-Type', 'text/html')
         self.write("<pre>")
         try:
-            server_log_path = os.path.join(options.contest_dir, "server_log.txt")
+            server_log_path = os.path.join(SRC_DIR, "server_log.txt")
             with open(server_log_path, 'r') as in_file:
                 lines = [line.decode('utf-8') for line in in_file.readlines()]
                 lines = [line for line in lines if all([v in line for v in value.split('/')])]
