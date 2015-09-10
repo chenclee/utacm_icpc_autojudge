@@ -63,13 +63,18 @@ class Judge:
                 self.logger.debug("%s: log=%s" % (user, str(log)))
                 self.contest.change_submission(subm_id, result='CJ')
                 user_id = log['user_id']
-                subprocess.call('chdir "%s"; rm -f *.class; rm -f a.out; rm -f *.pyc' % log['path'], shell=True)
-
+                for name in os.listdir(log['path']):
+                    file_path = os.path.join(log['path'], name)
+                    try:
+                        if name.endswith('.class') or name == 'a.out' or name.endswith('.pyc'):
+                            os.unlink(file_path)
+                    except Exception, e:
+                        self.logger.exception('could not remove binaries')
                 error_log = None
                 if log['lang'] in Judge.lang_compile:
                     compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
-                    compiler = subprocess.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
+                    compiler = subprocess.Popen('cd %s; %s' % (log['path'].__repr__(), ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
                     try:
                         stderr_data = compiler.communicate(timeout=60)[1]
                         if compiler.returncode != 0:
@@ -102,7 +107,7 @@ class Judge:
                         '--net="none"',
                         '--cpu-shares=128',
                         '-m="%dm"' % (prob.mem_limit,), '--read-only',
-                        '-v', '"%s":/judging_dir:ro' % (os.path.abspath(log['path']),), '-w', '/judging_dir',
+                        '-v', '"%s":/judging_dir:ro' % (log['path'].__repr__(),), '-w', '/judging_dir',
                         '-u', user, 'chenclee/sandbox',
                         ' '.join(run_cmd)]
                 self.logger.debug("%s: %s: " % (user, ' '.join(docker_cmd)))
@@ -114,7 +119,7 @@ class Judge:
                         self.logger.debug("%s: time limit exceeded; killing docker container" % (user,))
                         ran_to_completion[0] = False
                         try:
-                            subprocess.call('docker rm -f %s' % (docker_name,), shell=True)
+                            subprocess.call(['docker', 'rm', '-f', docker_name])
                         except:
                             pass
                     timer = threading.Timer(prob.time_limit * 4, timeout_func)
@@ -175,7 +180,13 @@ class Judge:
                 self.in_queue[user_id] -= 1
             self.queue.task_done()
 
-            subprocess.call('chdir "%s"; rm -f *.class; rm -f a.out' % log['path'], shell=True)
+            for name in os.listdir(log['path']):
+                file_path = os.path.join(log['path'], name)
+                try:
+                    if name.endswith('.class') or name == 'a.out' or name.endswith('.pyc'):
+                        os.unlink(file_path)
+                except Exception, e:
+                    self.logger.exception('could not remove binaries')
 
         self.logger.info(user + " halted")
 
