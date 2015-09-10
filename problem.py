@@ -64,5 +64,5 @@ class Problem:
             with open(os.path.join(self.prob_path, self.outputs[0]), 'r') as in_file:
                 self.output_text = in_file.read()
         except Exception as e:
-            self.critical("No input/output files found for " + self.prob_id)
+            self.logger.critical("No input/output files found for " + self.prob_id)
             raise
