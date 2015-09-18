@@ -35,12 +35,9 @@
 
                 <ul class="nav navbar-nav" role="tablist">
                     <li><a href="#/home">Home</a></li>
-                    {% if admin %}
-                    <li><a href="#/admin">Admin Panel</a></li>
-                    {% end %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right" style="padding-right: 21px">
-                    <li><a>{{!remainingTime}}</a></li>
+                    <li><a>Pre-Contest: {{!remainingTime}}</a></li>
                     <li><a href="#home">{{ escape(current_user["name"]) }}</a></li>
                     <li><a href="/auth/logout">{{ _("Logout") }}</a></li>
                 </ul>
