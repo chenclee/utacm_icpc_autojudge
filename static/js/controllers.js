@@ -52,7 +52,6 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
           if (typeof $rootScope.prevSync !== 'undefined')
             $interval.cancel($rootScope.prevSync);
           $rootScope.rawTime = data['remaining_time'];
-          $scope.guest_whitelist = data['guest_whitelist'];
           $scope.scoreboard = data['scoreboard'];
           $scope.solved = data['solved'];
           $scope.submissions = data['submissions'];

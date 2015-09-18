@@ -1,4 +1,5 @@
 import json
+import jwt
 import logging
 import os
 import uuid
@@ -50,7 +51,7 @@ class BaseHandler(web.RequestHandler):
         return (cookie['email'], cookie['name'], cookie['sub'])
 
     def current_user_pretty(self):
-        return "%s (%s)" % self.current_user_id()
+        return "%s (%s)" % self.current_user_id()[:2]
 
     def is_admin(self):
         return self.current_user_id()[0] in options.admin_whitelist
@@ -72,6 +73,7 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
 
             self.xsrf_token
             access_token = str(user['access_token'])
+            user_info = jwt.decode(user['id_token'], verify=False)
             http_client = self.get_auth_http_client()
             response = yield http_client.fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token='+access_token)
             if not response:
@@ -82,6 +84,7 @@ class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
             if options.admin_only and user['email'] not in options.admin_whitelist:
                 logger.warn("%s (%s) attempted to sign in (admin only mode)" % (user["name"], user["email"]))
                 raise web.HTTPError(403, 'Contest is running in admin only mode.')
+            user['sub'] = user_info['sub']
             self.set_secure_cookie('utacm_contest_user', escape.json_encode(user), expires_days=1)
             logger.info("%s (%s) signed in" % (user["name"], user["email"]))
             self.redirect('/')
@@ -134,9 +137,13 @@ class UpdatesHandler(BaseHandler):
     @web.authenticated
     def get(self):
         updates = {'remaining_time': contest.remaining_time()}
+        scoreboard = [list(person) for person in contest.get_scoreboard(live=self.is_admin())]
+        for person in scoreboard:
+            if person[0][0] in options.guest_whitelist:
+                person[0] = list(person[0])
+                person[0][1] = '%s %s' % (person[0][1], '(Guest)')
         if contest.is_running() or contest.is_over():
-            updates['guests'] = options.guest_whitelist
-            updates['scoreboard'] = contest.get_scoreboard(live=self.is_admin())
+            updates['scoreboard'] = scoreboard
             updates['solved'] = contest.get_solved(self.current_user_id())
             updates['submissions'] = contest.get_submissions(self.current_user_id(), is_admin=self.is_admin())
             updates['clarifications'] = contest.get_clarifs(self.current_user_id(), is_admin=self.is_admin())

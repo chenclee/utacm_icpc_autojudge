@@ -22,13 +22,7 @@
                   <span ng-show="entry['result'] == 'CE'">
                     <a ng-href="/api/v1/errors/{{entry['subm_id']}}" target="_blank">{{verdicts[entry['result']]}}</a>
                   </span>
-                  <span ng-show="entry['result'] != 'CE' && !secret_key">
-                    {{verdicts[entry['result']]}}
-                  </span>
-                  <span ng-show="(entry['result'] == 'WA' || entry['result'] == 'RE') && secret_key">
-                    <a ng-href="/api/v1/outputs/{{entry['subm_id']}}" target="_blank">{{verdicts[entry['result']]}}</a>
-                  </span>
-                  <span ng-show="!(entry['result'] == 'WA' || entry['result'] == 'RE') && secret_key">
+                  <span ng-show="entry['result'] != 'CE'">
                     {{verdicts[entry['result']]}}
                   </span>
                 </td>
