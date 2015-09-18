@@ -194,6 +194,26 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
+class OutputFileHandler(BaseHandler):
+    @web.authenticated
+    def get(self, value):
+        if not self.is_admin():
+            raise web.HTTPError(404)
+
+        try:
+            subm_id = int(value)
+        except:
+            raise web.HTTPError(400)
+
+        output_log = contest.get_output_log(subm_id)
+        if not output_log:
+            raise web.HTTPError(404)
+        self.set_header('Content-Type', 'text/html')
+        self.write('<pre>')
+        self.write(escape.xhtml_escape(str(output_log)))
+        self.write('</pre>')
+
+
 class ErrorFileHandler(BaseHandler):
     @web.authenticated
     def get(self, value):
@@ -424,6 +444,7 @@ if __name__ == '__main__':
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
+            (r'/api/v1/outputs/(.*)', OutputFileHandler),
             (r'/api/v1/errors/(.*)', ErrorFileHandler),
         ],
         cookie_secret=str(uuid.uuid4()),

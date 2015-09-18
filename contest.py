@@ -111,12 +111,20 @@ class Contest:
                 solved[submission['prob_id']] = True
         return solved
 
+    def get_output_log(self, subm_id):
+        try:
+            if subm_id in self.submissions:
+                return self.submissions[subm_id]['output_log']
+        except Exception:
+            return None
+        return None
+
     def get_error_log(self, user_id, subm_id, is_admin=False):
         try:
             if subm_id in self.submissions and (
                     self.submissions[subm_id]['user_id'][2] == user_id[2] or is_admin):
                 return self.submissions[subm_id]['error_log']
-        except:
+        except Exception:
             return None
         return None
 
@@ -160,7 +168,7 @@ class Contest:
             self.update_scoreboard()
         return subm_id
 
-    def change_submission(self, subm_id, result, run_time=0.0, error_log=None):
+    def change_submission(self, subm_id, result, run_time=0.0, output_log=None, error_log=None):
         """Changes the result of a submission.
 
         Parameters:
@@ -171,6 +179,7 @@ class Contest:
             return
         self.submissions[subm_id]['result'] = result
         self.submissions[subm_id]['run_time'] = run_time
+        self.submissions[subm_id]['output_log'] = output_log
         self.submissions[subm_id]['error_log'] = error_log
         self.update_scoreboard()
 

@@ -70,11 +70,12 @@ class Judge:
                             os.unlink(file_path)
                     except Exception, e:
                         self.logger.exception('could not remove binaries')
+                output_log = None
                 error_log = None
                 if log['lang'] in Judge.lang_compile:
                     compile_cmd = Judge.lang_compile[log['lang']] + [log['source_name']]
                     self.logger.debug("%s: %s" % (user, ' '.join(compile_cmd)))
-                    compiler = subprocess.Popen('cd "%s"; %s' % (log['path'].replace('"', '\\"'), ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
+                    compiler = subprocess.Popen('cd "%s"; %s' % (log['path'], ' '.join(compile_cmd)), shell=True, stderr=subprocess.PIPE)
                     try:
                         stderr_data = compiler.communicate(timeout=60)[1]
                         if compiler.returncode != 0:
@@ -140,6 +141,8 @@ class Judge:
                             if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
                                 stderr_lines = stderr_lines[:-1]
                             result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
+                            if result == 'RE':
+                                output_log = stderr_data[:32768]
                             raise AssertionError()
                         time_matches = [re.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
                         elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
@@ -156,6 +159,7 @@ class Judge:
                         if actual == expected:
                             result = 'AC'
                         else:
+                            output_log = stdout_data[:32768]
                             result = 'WA'
                     else:
                         self.logger.debug("%s: program exceeded time limit and was terminated" % (user,))
@@ -175,7 +179,7 @@ class Judge:
                 self.logger.error("%s: %s" % (user, traceback.format_exception(*sys.exc_info())))
                 result = 'JE'
             self.logger.info("%s: result for submission %d is %s" % (user, subm_id, Contest.verdicts[result]))
-            self.contest.change_submission(subm_id, result=result, run_time=elapsed, error_log=error_log)
+            self.contest.change_submission(subm_id, result=result, run_time=elapsed, output_log=output_log, error_log=error_log)
             if user_id:
                 self.in_queue[user_id] -= 1
             self.queue.task_done()
