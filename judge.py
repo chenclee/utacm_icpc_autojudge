@@ -232,7 +232,7 @@ class Judge:
         self.in_queue[user_id] += 1
         submit_time = (int(time.time()) - self.contest.start_time) / 60
         subm_id = self.contest.add_submission(user_id, prob_id, lang, submit_time)
-        path = os.path.join(self.subm_dir, str(user_id), prob_id, str(subm_id))
+        path = os.path.join(self.subm_dir, str(user_id[2]), prob_id, str(subm_id))
         source_path = os.path.join(path, source_name)
         if not os.path.exists(os.path.dirname(source_path)):
             os.makedirs(os.path.dirname(source_path))

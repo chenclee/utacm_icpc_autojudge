@@ -45,7 +45,7 @@ class BaseHandler(web.RequestHandler):
 
     def current_user_id(self):
         cookie = self.current_user
-        return (cookie['email'], cookie['name'])
+        return (cookie['email'], cookie['name'], cookie['sub'])
 
     def current_user_pretty(self):
         return "%s (%s)" % self.current_user_id()

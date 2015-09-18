@@ -97,7 +97,7 @@ class Contest:
             user_id - user id
         """
         return [self.submissions[subm_id] for subm_id in xrange(self.next_subm_id - 1, -1, -1)
-                if self.submissions[subm_id]['user_id'] == user_id or is_admin]
+                if self.submissions[subm_id]['user_id'][2] == user_id[2] or is_admin]
 
     def get_solved(self, user_id):
         """Returns whether each problem has been solved.
@@ -114,7 +114,7 @@ class Contest:
     def get_error_log(self, user_id, subm_id, is_admin=False):
         try:
             if subm_id in self.submissions and (
-                    self.submissions[subm_id]['user_id'] == user_id or is_admin):
+                    self.submissions[subm_id]['user_id'][2] == user_id[2] or is_admin):
                 return self.submissions[subm_id]['error_log']
         except:
             return None
@@ -201,7 +201,7 @@ class Contest:
         # Make solved negative to sort by highest score, and fix negative after.
         self.scoreboard = sorted([(-points[user_id]['num_solved'],
                                    points[user_id]['penalty'],
-                                   user_id,
+                                   user_id[:2],
                                    points[user_id]['solved'])
                                    for user_id in points])
         self.scoreboard = [(c, -a, b, d) for a, b, c, d in self.scoreboard]
@@ -224,7 +224,7 @@ class Contest:
         """
         if user_id == -1:
             return tuple(self.clarifs)
-        return tuple(c for c in self.clarifs if not c['private'] or c['user_id'] == user_id or is_admin)
+        return tuple(c for c in self.clarifs if not c['private'] or c['user_id'][2] == user_id[2] or is_admin)
 
     def submit_clarif(self, user_id, prob_id, message):
         """Submits a clarification request.
