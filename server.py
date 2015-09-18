@@ -24,6 +24,8 @@ define('client_secret',
        help='Google OAuth2 Client Secret', type=str)
 define('admin_whitelist',
        help='emails of admins', type=str, multiple=True)
+define('guest_whitelist',
+       help='emails of guests', type=str, multiple=True)
 define('port', default=8000,
        help='start on the given port', type=int)
 define('contest_dir', default='contest',
@@ -45,13 +47,16 @@ class BaseHandler(web.RequestHandler):
 
     def current_user_id(self):
         cookie = self.current_user
-        return (cookie['email'], cookie['name'])
+        return (cookie['email'], cookie['name'], cookie['sub'])
 
     def current_user_pretty(self):
         return "%s (%s)" % self.current_user_id()
 
     def is_admin(self):
         return self.current_user_id()[0] in options.admin_whitelist
+
+    def is_guest(self):
+        return self.current_user_id()[0] in options.guest_whitelist
 
 
 class AuthLoginHandler(BaseHandler, auth.GoogleOAuth2Mixin):
@@ -130,6 +135,7 @@ class UpdatesHandler(BaseHandler):
     def get(self):
         updates = {'remaining_time': contest.remaining_time()}
         if contest.is_running() or contest.is_over():
+            updates['guests'] = options.guest_whitelist
             updates['scoreboard'] = contest.get_scoreboard(live=self.is_admin())
             updates['solved'] = contest.get_solved(self.current_user_id())
             updates['submissions'] = contest.get_submissions(self.current_user_id(), is_admin=self.is_admin())
@@ -188,6 +194,26 @@ class SubmitClarificationHandler(BaseHandler):
         self.write(json.dumps(True))
 
 
+class OutputFileHandler(BaseHandler):
+    @web.authenticated
+    def get(self, value):
+        if not self.is_admin():
+            raise web.HTTPError(404)
+
+        try:
+            subm_id = int(value)
+        except:
+            raise web.HTTPError(400)
+
+        output_log = contest.get_output_log(subm_id)
+        if not output_log:
+            raise web.HTTPError(404)
+        self.set_header('Content-Type', 'text/html')
+        self.write('<pre>')
+        self.write(escape.xhtml_escape(str(output_log)))
+        self.write('</pre>')
+
+
 class ErrorFileHandler(BaseHandler):
     @web.authenticated
     def get(self, value):
@@ -236,6 +262,7 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
 
         updates = {'frozen': contest.is_frozen(),
+                   'guest_whitelist': options.guest_whitelist,
                    'whitelist': options.admin_whitelist,
                    'clarifs': contest.get_clarifs(-1)}
         self.set_header('Content-Type', 'application/json')
@@ -251,6 +278,8 @@ class AdminHandler(BaseHandler):
             self.clear_cache()
         elif put_type == 'frozen':
             self.change_state()
+        elif put_type == 'guest_whitelist':
+            self.add_to_guest_whitelist()
         elif put_type == 'whitelist':
             self.add_to_whitelist()
         elif put_type == 'add_time':
@@ -305,6 +334,16 @@ class AdminHandler(BaseHandler):
             raise web.HTTPError(400)
         if new_admin not in options.admin_whitelist:
             options.admin_whitelist.append(new_admin)
+        self.write(json.dumps(True))
+
+    def add_to_guest_whitelist(self):
+        newGuest = ''
+        try:
+            new_guest = self.get_argument('newGuest')
+        except Exception:
+            raise web.HTTPError(400)
+        if new_guest not in options.guest_whitelist:
+            options.guest_whitelist.append(new_guest)
         self.write(json.dumps(True))
 
     def add_time(self):
@@ -405,6 +444,7 @@ if __name__ == '__main__':
             (r'/api/v1/updates', UpdatesHandler),
             (r'/api/v1/submit/(.*)/solution', SubmitSolutionHandler),
             (r'/api/v1/submit/(.*)/clarification', SubmitClarificationHandler),
+            (r'/api/v1/outputs/(.*)', OutputFileHandler),
             (r'/api/v1/errors/(.*)', ErrorFileHandler),
         ],
         cookie_secret=str(uuid.uuid4()),

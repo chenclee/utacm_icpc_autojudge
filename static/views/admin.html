@@ -96,6 +96,32 @@
         </div>
         <br>
         <div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Guest WhiteList</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="guest in guest_whitelist">
+                            <td>{{$index}}</td>
+                            <td>"{{guest}}"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <form name="addGuest">
+                <label>Add Guest (email address):</label>
+                <br>
+                <input type="email" ng-model="addGuestTextBox">
+                <button type="submit" class="btn btn-primary" ng-click="processAddGuestForm(addGuestTextBox)">Submit</button>
+            </form>
+        </div>
+        <br>
+        <div>
             <form name="freezeScoreboardForm">
                 <label>Change Scoreboard State:</label>
                 <br>

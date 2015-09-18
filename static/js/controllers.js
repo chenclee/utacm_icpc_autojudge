@@ -52,6 +52,7 @@ contestControllers.controller('MainCtrl', ['$scope', '$http', '$interval', '$roo
           if (typeof $rootScope.prevSync !== 'undefined')
             $interval.cancel($rootScope.prevSync);
           $rootScope.rawTime = data['remaining_time'];
+          $scope.guest_whitelist = data['guest_whitelist'];
           $scope.scoreboard = data['scoreboard'];
           $scope.solved = data['solved'];
           $scope.submissions = data['submissions'];
@@ -84,6 +85,7 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
     function ($scope, $rootScope, $http, $cookies, $window, $modal, $interval) {
       function sync () {
         $http.get('api/v1/admin/updates').success(function (data) {
+          $scope.guest_whitelist = data.guest_whitelist;
           $scope.whitelist = data.whitelist;
           $scope.allClarifications = data.clarifs;
           $scope.boardIsFrozen = data.frozen;
@@ -181,7 +183,22 @@ contestControllers.controller('AdminCtrl', ['$scope', '$rootScope', '$http', '$c
           $scope.addAdminTextBox = null;
           sync();
         });
+      }
 
+      $scope.processAddGuestForm = function(newGuest) {
+        if (newGuest == null)
+          return;
+        submit_url = 'api/v1/admin/guest_whitelist';
+        submit_data = { '_xsrf': $cookies._xsrf, 'newGuest': newGuest };
+        $http({
+          method  : 'POST',
+          url     : submit_url,
+          data    : $.param(submit_data),
+          headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).success(function(data) {
+          $scope.addGuestTextBox = null;
+          sync();
+        });
       }
 
       $scope.changeState = function(state) {
