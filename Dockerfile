@@ -16,5 +16,7 @@ RUN apt-get update
 RUN apt-get install -y time
 RUN apt-get install -y build-essential python openjdk-7-jdk
 RUN apt-get install -y python-dev python-pip
+RUN wget www.scala-lang.org/files/archive/scala-2.11.7.deb
+RUN dpkg -i scala-2.11.7.deb
 
 RUN pip install numpy

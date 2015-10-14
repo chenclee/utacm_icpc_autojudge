@@ -22,14 +22,17 @@ class Judge:
                     'GNU C 4': ['gcc', '-static', '-fno-optimize-sibling-calls',
                                 '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
                                 '-lm', '-s', '-O2'],
-                    'Java 6, 7': ['javac', '-cp', '".;*"']}
+                    'Java 6, 7': ['javac', '-cp', '".;*"'],
+                    'Scala 2.11.7': ['scalac', '-cp', '",;*"']
+                    }
 
     lang_run = {'GNU C++ 4': ['./a.out'],
                 'GNU C++11 4': ['./a.out'],
                 'GNU C 4': ['./a.out'],
                 'Java 6, 7': ['java', '-Xmx512M', '-Xss64M', '-DONLINE_JUDGE=true'],
                 'Python 2.7': ['python'],
-                'Python 3.4': ['python3']
+                'Python 3.4': ['python3'],
+                'Scala 2.11.7': ['scala''-Xmx512M', '-Xss64M']
     }
 
     def __init__(self, contest, problems, contest_dir, num_judges, logger):
