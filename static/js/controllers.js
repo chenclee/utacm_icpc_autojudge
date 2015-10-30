@@ -375,8 +375,12 @@ contestControllers.controller('ProblemCtrl', ['$scope', '$http', '$rootScope', '
 
       $scope.clarif = {}
       $scope.processClarifForm = function (index) {
+        var content = $scope.clarif[index].replace(/^\s+|\s+$/g, '')
+        if (!content) {
+          return;
+        }
         submitUrl = 'api/v1/submit/' + probIds[index] + '/clarification';
-        submitData = { '_xsrf': $cookies._xsrf, 'content': $scope.clarif[index] };
+        submitData = { '_xsrf': $cookies._xsrf, 'content': content };
         $http({
           method  : 'POST',
           url     : submitUrl,

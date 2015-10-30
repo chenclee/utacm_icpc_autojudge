@@ -190,7 +190,10 @@ class SubmitClarificationHandler(BaseHandler):
         if prob_id not in contest_cfg['prob_ids']:
             raise web.HTTPError(404)
         user_id = self.current_user_id()
-        message = self.get_argument('content')
+        message = self.get_argument('content').strip()
+
+        if not message:
+            raise web.HTTPError(400)
 
         logger.info('%s requests clarification for problem %s' %
                 (self.current_user_pretty(), prob_id))
