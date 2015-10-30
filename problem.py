@@ -60,8 +60,6 @@ class Problem:
 
         try:
             self.input_path = os.path.join(self.prob_path, self.inputs[0])
-            with open(self.input_path, 'r') as in_file:
-                self.input_text = in_file.read()
             with open(os.path.join(self.prob_path, self.outputs[0]), 'r') as in_file:
                 self.output_text = in_file.read()
         except Exception as e:

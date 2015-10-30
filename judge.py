@@ -102,7 +102,7 @@ class Judge:
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
                 docker_name = str(uuid.uuid4())
-                docker_cmd = ['docker', 'run', '-i',
+                docker_cmd = ['docker', 'run',
                         '--name="%s"' % (docker_name,),
                         '--rm=true',
                         '--net="none"',
@@ -112,65 +112,66 @@ class Judge:
                         '-u', user, 'chenclee/sandbox',
                         ' '.join(run_cmd)]
                 self.logger.debug("%s: %s: " % (user, ' '.join(docker_cmd)))
-                runner = subprocess.Popen(shlex.split(' '.join(docker_cmd)),
-                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                try:
-                    ran_to_completion = [True]
-                    def timeout_func():
-                        self.logger.debug("%s: time limit exceeded; killing docker container" % (user,))
-                        ran_to_completion[0] = False
-                        try:
-                            subprocess.call(['docker', 'rm', '-f', docker_name])
-                        except:
-                            pass
-                    timer = threading.Timer(prob.time_limit * 4, timeout_func)
-                    timer.start()
-                    stdout_data, stderr_data = runner.communicate(input=prob.input_text)
-                    timer.cancel()
-                    ran_to_completion = ran_to_completion[0]
+                with open(prob.input_path, 'r') as input_file:
+                    try:
+                        ran_to_completion = [True]
+                        def timeout_func():
+                            self.logger.debug("%s: time limit exceeded; killing docker container" % (user,))
+                            ran_to_completion[0] = False
+                            try:
+                                subprocess.call(['docker', 'rm', '-f', docker_name])
+                            except:
+                                pass
+                        timer = threading.Timer(prob.time_limit * 4, timeout_func)
+                        timer.start()
+                        runner = subprocess.Popen(shlex.split(' '.join(docker_cmd)),
+                                stdin=input_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        stdout_data, stderr_data = runner.communicate()
+                        timer.cancel()
+                        ran_to_completion = ran_to_completion[0]
 
-                    with open(os.path.join(log['path'], 'runtime_output.txt'), 'w') as out_file:
-                        out_file.write(stdout_data)
-                    with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
-                        out_file.write(stderr_data)
+                        with open(os.path.join(log['path'], 'runtime_output.txt'), 'w') as out_file:
+                            out_file.write(stdout_data)
+                        with open(os.path.join(log['path'], 'runtime_errors.txt'), 'w') as out_file:
+                            out_file.write(stderr_data)
 
-                    if ran_to_completion:
-                        self.logger.debug("%s: program ran to completion" % (user,))
-                        stderr_lines = stderr_data.splitlines()
-                        if runner.returncode != 0:
-                            if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
-                                stderr_lines = stderr_lines[:-1]
-                            result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
-                            if result == 'RE':
-                                output_log = stderr_data[:32768]
-                            raise AssertionError()
-                        time_matches = [re.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
-                        elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
-                        if elapsed > prob.time_limit:
-                            self.logger.debug("%s: user+sys time exceeds time limit" % (user,))
+                        if ran_to_completion:
+                            self.logger.debug("%s: program ran to completion" % (user,))
+                            stderr_lines = stderr_data.splitlines()
+                            if runner.returncode != 0:
+                                if 'read unix /var/run/docker.sock' in stderr_lines[-1]:
+                                    stderr_lines = stderr_lines[:-1]
+                                result = 'RE' if stderr_lines[0].strip() != 'Command terminated by signal 9' else 'ML'
+                                if result == 'RE':
+                                    output_log = stderr_data[:32768]
+                                raise AssertionError()
+                            time_matches = [re.search('(\d+\.\d{2})', s) for s in stderr_lines[-2:]]
+                            elapsed = sum([float(time_match.group(0)) for time_match in time_matches])
+                            if elapsed > prob.time_limit:
+                                self.logger.debug("%s: user+sys time exceeds time limit" % (user,))
+                                raise subprocess.TimeoutExpired(
+                                        cmd=' '.join(docker_cmd),
+                                        timeout=prob.time_limit,
+                                        output=None)
+                            actual = [line.strip() for line in stdout_data.splitlines() if line.strip() != '']
+                            expected = [line.strip() for line in prob.output_text.splitlines() if line.strip() != '']
+                            self.logger.debug("%s: actual=%s" % (user, str(actual[:10])))
+                            self.logger.debug("%s: expected=%s" % (user, str(expected[:10])))
+                            if actual == expected:
+                                result = 'AC'
+                            else:
+                                output_log = stdout_data[:32768]
+                                result = 'WA'
+                        else:
+                            self.logger.debug("%s: program exceeded time limit and was terminated" % (user,))
                             raise subprocess.TimeoutExpired(
                                     cmd=' '.join(docker_cmd),
                                     timeout=prob.time_limit,
                                     output=None)
-                        actual = [line.strip() for line in stdout_data.splitlines() if line.strip() != '']
-                        expected = [line.strip() for line in prob.output_text.splitlines() if line.strip() != '']
-                        self.logger.debug("%s: actual=%s" % (user, str(actual[:10])))
-                        self.logger.debug("%s: expected=%s" % (user, str(expected[:10])))
-                        if actual == expected:
-                            result = 'AC'
-                        else:
-                            output_log = stdout_data[:32768]
-                            result = 'WA'
-                    else:
-                        self.logger.debug("%s: program exceeded time limit and was terminated" % (user,))
-                        raise subprocess.TimeoutExpired(
-                                cmd=' '.join(docker_cmd),
-                                timeout=prob.time_limit,
-                                output=None)
-                except subprocess.TimeoutExpired:
-                    elapsed = self.problems[log['prob_id']].time_limit
-                    result = 'TL'
-                    raise AssertionError()
+                    except subprocess.TimeoutExpired:
+                        elapsed = self.problems[log['prob_id']].time_limit
+                        result = 'TL'
+                        raise AssertionError()
             except Queue.Empty:
                 continue
             except AssertionError:
