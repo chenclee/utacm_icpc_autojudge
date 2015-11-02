@@ -102,6 +102,8 @@ class Judge:
                 run_cmd = ['time', '--portability'] + Judge.lang_run[log['lang']]
                 if 'Java' in log['lang']:
                     run_cmd.append(log['source_name'][:-5])
+                elif 'Scala' in log['lang']:
+                	run_cmd.append(log['source_name'][:-6])
                 elif 'Python' in log['lang']:
                     run_cmd.append(log['source_name'])
                 docker_name = str(uuid.uuid4())
