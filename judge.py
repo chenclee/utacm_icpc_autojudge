@@ -23,7 +23,7 @@ class Judge:
                                 '-fno-strict-aliasing', '-DONLINE_JUDGE', '-fno-asm',
                                 '-lm', '-s', '-O2'],
                     'Java 6, 7': ['javac', '-cp', '".;*"'],
-                    'Scala 2.11.7': ['scalac', '-cp', '",;*"']
+                    'Scala 2.11.7': ['scalac', '-cp', '".;*"']
                     }
 
     lang_run = {'GNU C++ 4': ['./a.out'],
