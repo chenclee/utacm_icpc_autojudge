@@ -32,7 +32,7 @@ class Judge:
                 'Java 6, 7': ['java', '-Xmx512M', '-Xss64M', '-DONLINE_JUDGE=true'],
                 'Python 2.7': ['python'],
                 'Python 3.4': ['python3'],
-                'Scala 2.11.7': ['scala''-Xmx512M', '-Xss64M']
+                'Scala 2.11.7': ['scala','-Xmx512M', '-Xss64M']
     }
 
     def __init__(self, contest, problems, contest_dir, num_judges, logger):
